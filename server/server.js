@@ -1178,8 +1178,10 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
 
       const inquiry = store.addInquiry(cleanInquiry);
 
-      firebaseDbService.syncInquiry(inquiry).catch(() => { });
-      sheetsService.appendInquiry(inquiry).catch(() => { });
+      await Promise.allSettled([
+        firebaseDbService.syncInquiry(inquiry),
+        sheetsService.appendInquiry(inquiry)
+      ]);
 
       res.status(201).json({ success: true, message: 'Inquiry received successfully', data: inquiry });
     } catch (err) {
@@ -1303,8 +1305,10 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
       }
 
       await firebaseDbService.syncBriefs(store.getBriefs());
-      sheetsService.appendBrief(result.brief).catch(() => { });
-      emailService.sendBriefSubmittedAlert(result.brief).catch(() => { });
+      await Promise.allSettled([
+        sheetsService.appendBrief(result.brief),
+        emailService.sendBriefSubmittedAlert(result.brief)
+      ]);
 
       res.json({ success: true, message: 'Discovery brief completed successfully', data: result.brief });
     } catch (err) {
@@ -1368,7 +1372,10 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
   app.put('/api/settings', requireAuth(['super_admin']), handleSettingsUpdate);
   app.patch('/api/settings', requireAuth(['super_admin']), handleSettingsUpdate);
 
-  app.get('/api/database/status', (req, res) => {
+  app.get('/api/database/status', async (req, res) => {
+    if (!firebaseDbService.isConnected) {
+      await firebaseDbService.init();
+    }
     const fbStatus = firebaseDbService.getStatus();
     res.json({
       success: true,
@@ -1379,7 +1386,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
         databaseName: 'aurora-group (Cloud DB)',
         region: fbStatus.region,
         uri: fbStatus.databaseUrl,
-        error: null,
+        error: fbStatus.error || null,
         closed: false
       }
     });

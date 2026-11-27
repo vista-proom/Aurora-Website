@@ -21,6 +21,7 @@ class FirebaseDbService {
     this.db = null;
     this.isConnected = false;
     this.app = null;
+    this.lastError = null;
     this.databaseUrl = DATABASE_URL;
     this.init();
   }
@@ -31,15 +32,29 @@ class FirebaseDbService {
       if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
         try {
           serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+          if (serviceAccount && typeof serviceAccount.private_key === 'string') {
+            serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+          }
           console.log('[Firebase DB] Loaded Service Account from FIREBASE_SERVICE_ACCOUNT_JSON env var.');
         } catch (e) {
-          console.warn('[Firebase DB] Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON:', e.message);
+          this.lastError = `Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON: ${e.message}`;
+          console.warn('[Firebase DB]', this.lastError);
         }
+      }
+
+      if (!serviceAccount && process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+        serviceAccount = {
+          project_id: process.env.FIREBASE_PROJECT_ID,
+          client_email: process.env.FIREBASE_CLIENT_EMAIL,
+          private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+        };
+        console.log('[Firebase DB] Loaded Service Account from FIREBASE_* env vars.');
       }
 
       if (!serviceAccount) {
         const keyPath = path.join(__dirname, '../serviceAccountKey.json');
         if (!fs.existsSync(keyPath)) {
+          this.lastError = this.lastError || 'Missing FIREBASE_SERVICE_ACCOUNT_JSON (or FIREBASE_CLIENT_EMAIL / FIREBASE_PRIVATE_KEY) env var on server';
           console.warn('[Firebase DB] serviceAccountKey.json not found. Operating in local mode.');
           return;
         }
@@ -60,9 +75,11 @@ class FirebaseDbService {
 
       this.db = getDatabase(this.app);
       this.isConnected = true;
+      this.lastError = null;
       console.log(`[Firebase DB] Connected to Firebase Realtime Database (${DATABASE_URL})`);
     } catch (err) {
       this.isConnected = false;
+      this.lastError = err.message;
       console.warn('[Firebase DB Init Warning]:', err.message);
     }
   }
@@ -74,6 +91,7 @@ class FirebaseDbService {
       region: 'europe-west1',
       databaseUrl: this.databaseUrl,
       dialect: 'Firebase Cloud Realtime Database (Zero Open Ports)',
+      error: this.lastError,
       closed: false
     };
   }

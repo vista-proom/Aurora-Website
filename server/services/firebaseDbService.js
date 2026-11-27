@@ -10,6 +10,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getDatabase } from 'firebase-admin/database';
+import { cloudinaryService } from './cloudinaryService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -139,7 +140,28 @@ class FirebaseDbService {
     }
     if (!this.isConnected || !this.db) return;
     try {
-      await this.db.ref('projects').set(projects);
+      const sanitized = Array.isArray(projects) ? projects : [];
+      if (cloudinaryService.isConfigured()) {
+        for (const p of sanitized) {
+          if (!p || typeof p !== 'object') continue;
+          if (typeof p.heroImage === 'string' && p.heroImage.startsWith('data:image/')) {
+            const up = await cloudinaryService.uploadDataUrl(p.heroImage, { folder: 'aurora/projects' });
+            p.heroImage = up.url;
+          }
+          if (Array.isArray(p.mediaGallery)) {
+            for (let i = 0; i < p.mediaGallery.length; i++) {
+              const m = p.mediaGallery[i];
+              const src = m && (m.dataUrl || m.url);
+              if (typeof src === 'string' && src.startsWith('data:image/')) {
+                const up = await cloudinaryService.uploadDataUrl(src, { folder: 'aurora/projects' });
+                p.mediaGallery[i] = { ...m, url: up.url, cloudinaryId: up.publicId };
+                delete p.mediaGallery[i].dataUrl;
+              }
+            }
+          }
+        }
+      }
+      await this.db.ref('projects').set(sanitized);
     } catch (e) {
       console.warn('[Firebase DB Sync Projects Error]:', e.message);
     }

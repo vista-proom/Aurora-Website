@@ -82,6 +82,39 @@ class FirebaseDbService {
   // REAL-TIME SYNC METHODS
   // ---------------------------------------------------------------------------
 
+  async fetchBriefs() {
+    if (!this.isConnected || !this.db) {
+      await this.init();
+    }
+    if (!this.isConnected || !this.db) return null;
+    try {
+      const snap = await this.db.ref('briefs').once('value');
+      const val = snap.val();
+      if (!val) return null;
+      const arr = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
+      return arr.length ? arr : null;
+    } catch (e) {
+      console.warn('[Firebase DB Fetch Briefs Error]:', e.message);
+      return null;
+    }
+  }
+
+  async syncBriefs(briefs) {
+    if (!this.isConnected || !this.db) {
+      await this.init();
+    }
+    if (!this.isConnected || !this.db) return;
+    try {
+      const map = {};
+      (briefs || []).forEach(b => {
+        if (b && b.token) map[b.token] = b;
+      });
+      await this.db.ref('briefs').set(map);
+    } catch (e) {
+      console.warn('[Firebase DB Sync Briefs Error]:', e.message);
+    }
+  }
+
   async syncProjects(projects) {
     if (!this.isConnected || !this.db) {
       await this.init();

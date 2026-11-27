@@ -1233,14 +1233,27 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
   });
 
   // -----------------------------------------------------------------------------
-  // 9. CLIENT BRIEFS (KYC ENGINE)
+  // 9. CLIENT BRIEFS (KYC ENGINE - Cloud Hydrated via Firebase DB)
   // -----------------------------------------------------------------------------
-  app.get('/api/briefs', requireAuth(['super_admin', 'manager'], 'canViewBriefs'), (req, res) => {
+  async function ensureBriefsHydrated() {
+    try {
+      const cloudBriefs = await firebaseDbService.fetchBriefs();
+      if (cloudBriefs && cloudBriefs.length > 0) {
+        store.replaceBriefs(cloudBriefs);
+      }
+    } catch (e) {
+      console.warn('[Briefs Cloud Hydrate Warning]:', e.message);
+    }
+  }
+
+  app.get('/api/briefs', requireAuth(['super_admin', 'manager'], 'canViewBriefs'), async (req, res) => {
+    await ensureBriefsHydrated();
     const briefs = store.getBriefs();
     res.json({ success: true, count: briefs.length, data: briefs });
   });
 
-  app.get('/api/briefs/:token', (req, res) => {
+  app.get('/api/briefs/:token', async (req, res) => {
+    await ensureBriefsHydrated();
     const cleanToken = sanitizeString(req.params.token);
     const brief = store.getBriefByToken(cleanToken);
     if (!brief) {
@@ -1265,7 +1278,8 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     });
   });
 
-  app.post('/api/briefs/generate', requireAuth(['super_admin', 'manager'], 'canGenerateBriefs'), (req, res) => {
+  app.post('/api/briefs/generate', requireAuth(['super_admin', 'manager'], 'canGenerateBriefs'), async (req, res) => {
+    await ensureBriefsHydrated();
     const clientName = sanitizeString(req.body.clientName || '').trim();
     const brandName = sanitizeString(req.body.brandName || '').trim();
     const daysValid = Number(req.body.daysValid) || 30;
@@ -1275,18 +1289,20 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     }
 
     const brief = store.createBrief(clientName, brandName, daysValid, req.authUser.email);
+    await firebaseDbService.syncBriefs(store.getBriefs());
     res.status(201).json({ success: true, data: brief });
   });
 
   app.post('/api/briefs/:token', formRateLimiter, async (req, res) => {
     try {
+      await ensureBriefsHydrated();
       const cleanToken = sanitizeString(req.params.token);
       const result = store.submitBrief(cleanToken, req.body);
       if (result.error) {
         return res.status(400).json({ success: false, error: result.error });
       }
 
-      firebaseDbService.syncBrief(result.brief).catch(() => { });
+      await firebaseDbService.syncBriefs(store.getBriefs());
       sheetsService.appendBrief(result.brief).catch(() => { });
       emailService.sendBriefSubmittedAlert(result.brief).catch(() => { });
 
@@ -1296,25 +1312,31 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     }
   });
 
-  app.patch('/api/briefs/:token/extend', requireAuth(['super_admin', 'manager'], 'canViewBriefs'), (req, res) => {
+  app.patch('/api/briefs/:token/extend', requireAuth(['super_admin', 'manager'], 'canViewBriefs'), async (req, res) => {
+    await ensureBriefsHydrated();
     const cleanToken = sanitizeString(req.params.token);
     const target = req.body.targetDate || req.body.days || 14;
     const updated = store.extendBriefExpiry(cleanToken, target, req.authUser.email);
     if (!updated) return res.status(404).json({ success: false, error: 'Brief not found' });
+    await firebaseDbService.syncBriefs(store.getBriefs());
     res.json({ success: true, data: updated });
   });
 
-  app.patch('/api/briefs/:token/deactivate', requireAuth(['super_admin', 'manager'], 'canViewBriefs'), (req, res) => {
+  app.patch('/api/briefs/:token/deactivate', requireAuth(['super_admin', 'manager'], 'canViewBriefs'), async (req, res) => {
+    await ensureBriefsHydrated();
     const cleanToken = sanitizeString(req.params.token);
     const updated = store.deactivateBrief(cleanToken, req.authUser.email);
     if (!updated) return res.status(404).json({ success: false, error: 'Brief not found' });
+    await firebaseDbService.syncBriefs(store.getBriefs());
     res.json({ success: true, data: updated });
   });
 
-  app.patch('/api/briefs/:token/edit', requireAuth(['super_admin', 'manager'], 'canViewBriefs'), (req, res) => {
+  app.patch('/api/briefs/:token/edit', requireAuth(['super_admin', 'manager'], 'canViewBriefs'), async (req, res) => {
+    await ensureBriefsHydrated();
     const cleanToken = sanitizeString(req.params.token);
     const result = store.updateBrief(cleanToken, req.body, req.authUser.email);
     if (result.error) return res.status(400).json({ success: false, error: result.error });
+    await firebaseDbService.syncBriefs(store.getBriefs());
     res.json({ success: true, data: result.brief });
   });
 

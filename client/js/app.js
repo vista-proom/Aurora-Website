@@ -1454,6 +1454,25 @@ function validateBriefStepRequired(stepNum) {
 
   const requiredFields = stepEl.querySelectorAll('[required]');
   for (const field of requiredFields) {
+    if (field.type === 'radio') {
+      const checked = stepEl.querySelector(`input[name="${field.name}"]:checked`);
+      if (!checked) {
+        if (currentBriefStep !== stepNum) {
+          currentBriefStep = stepNum;
+          updateBriefStepUI(false);
+        }
+        field.focus();
+        showToastNotification(
+          isAr
+            ? 'يرجى اختيار إحدى الإجابات المطلوبة (*) قبل الانتقال للخطوة التالية.'
+            : 'Please select one of the required (*) options before proceeding to the next step.',
+          'warning',
+          2600
+        );
+        return false;
+      }
+      continue;
+    }
     const val = (field.value || '').trim();
     if (!val || (typeof field.checkValidity === 'function' && !field.checkValidity())) {
       if (currentBriefStep !== stepNum) {

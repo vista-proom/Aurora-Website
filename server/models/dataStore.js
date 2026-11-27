@@ -749,6 +749,12 @@ class DataStoreV2 {
     }
   }
 
+  replaceBriefs(briefsList) {
+    if (Array.isArray(briefsList) && briefsList.length > 0) {
+      this.write(this.briefsFile, briefsList);
+    }
+  }
+
   getProjectBySlug(slug) {
     const list = this.read(this.projectsFile);
     return list.find(p => p.slug === slug);

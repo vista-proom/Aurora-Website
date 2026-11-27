@@ -1,0 +1,230 @@
+[
+  {
+    "id": "srv-1",
+    "nameEn": "Social Media Management",
+    "nameAr": "إدارة السوشيال ميديا",
+    "descEn": "Strategic monthly content planning, creative design, multi-platform publishing, community engagement, and performance tracking.",
+    "descAr": "خطة محتوى شهرية، تصميم المنشورات، النشر على المنصات، إدارة تفاعل الجمهور، ومتابعة أداء المحتوى.",
+    "category": "marketing",
+    "tagEn": "Growth",
+    "tagAr": "نمو وتفاعل",
+    "items": [
+      "Monthly Content Calendar (خطة محتوى شهرية)",
+      "Creative Post Design (تصميم المنشورات)",
+      "Multi-Platform Publishing (النشر على المنصات)",
+      "Community Engagement (إدارة تفاعل الجمهور)",
+      "Performance Tracking (متابعة أداء المحتوى)"
+    ],
+    "active": true,
+    "order": 1
+  },
+  {
+    "id": "srv-2",
+    "nameEn": "Paid Advertising",
+    "nameAr": "الإعلانات الممولة",
+    "descEn": "Data-driven Meta and TikTok campaigns, precise audience targeting, conversion retargeting, budget optimization, and regular performance reporting.",
+    "descAr": "حملات Meta و TikTok، تحديد الجمهور المستهدف، إعادة الاستهداف، متابعة الميزانيات والأداء، وتقارير وتحسينات دورية.",
+    "category": "marketing",
+    "tagEn": "Performance",
+    "tagAr": "أداء وإعلانات",
+    "items": [
+      "Meta & TikTok Campaigns (حملات Meta و TikTok)",
+      "Target Audience Segmentation (تحديد الجمهور المستهدف)",
+      "Conversion Retargeting (إعادة الاستهداف)",
+      "Budget & ROAS Tracking (متابعة الميزانيات والأداء)",
+      "Performance Reports & Optimization (تقارير وتحسينات دورية)"
+    ],
+    "active": true,
+    "order": 2
+  },
+  {
+    "id": "srv-3",
+    "nameEn": "Strategy & Market Research",
+    "nameAr": "الاستراتيجية وتحليل السوق",
+    "descEn": "Market and competitor analysis, target audience profiling, opportunity mapping, strategic marketing direction, and comprehensive growth planning.",
+    "descAr": "تحليل السوق والمنافسين، دراسة الجمهور المستهدف، تحديد الفرص والتحديات، وضع الاتجاه التسويقي، وإعداد خطة التسويق.",
+    "category": "marketing",
+    "tagEn": "Strategy",
+    "tagAr": "استراتيجية وبحث",
+    "items": [
+      "Market & Competitor Analysis (تحليل السوق والمنافسين)",
+      "Audience Profiling (دراسة الجمهور المستهدف)",
+      "Opportunity & Challenge Mapping (تحديد الفرص والتحديات)",
+      "Marketing Direction (وضع الاتجاه التسويقي)",
+      "Integrated Marketing Roadmap (إعداد خطة التسويق)"
+    ],
+    "active": true,
+    "order": 3
+  },
+  {
+    "id": "srv-4",
+    "nameEn": "Brand Identity & Design",
+    "nameAr": "الهوية البصرية والتصميم",
+    "descEn": "Distinctive logo design, complete visual guidelines, social media assets, marketing collateral, print design, and identity consistency across campaigns.",
+    "descAr": "تصميم الشعارات والهويات البصرية، دليل الهوية البصرية، تصميمات السوشيال ميديا، تصميم المواد المطبوعة، وتطبيق الهوية على الحملات.",
+    "category": "marketing",
+    "tagEn": "Branding",
+    "tagAr": "هوية وتصميم",
+    "items": [
+      "Logo & Visual Identity Design (تصميم الشعارات والهويات)",
+      "Brand Guidelines Manual (دليل الهوية البصرية)",
+      "Social Media Creatives (تصميمات السوشيال ميديا)",
+      "Print & Packaging Collateral (تصميم المواد المطبوعة)",
+      "Campaign Visual Systems (تطبيق الهوية على الحملات)"
+    ],
+    "active": true,
+    "order": 4
+  },
+  {
+    "id": "srv-5",
+    "nameEn": "Content & Influencer Marketing",
+    "nameAr": "المحتوى والتسويق بالمؤثرين",
+    "descEn": "Compelling copywriting, high-converting video scripts, creative campaign concepts, authentic brand storytelling, and end-to-end influencer collaborations.",
+    "descAr": "كتابة المحتوى والـ Copywriting، كتابة سيناريوهات الفيديو، أفكار الحملات الإبداعية، السرد القصصي للبراند، وتخطيط حملات المؤثرين وإدارتها.",
+    "category": "marketing",
+    "tagEn": "Content",
+    "tagAr": "محتوى ومؤثرين",
+    "items": [
+      "Copywriting & Scriptwriting (كتابة المحتوى والسيناريوهات)",
+      "Video Concept Scripts (كتابة سيناريوهات الفيديو)",
+      "Creative Campaign Ideas (أفكار الحملات الإبداعية)",
+      "Brand Storytelling (السرد القصصي للبراند)",
+      "Influencer Campaign Management (تخطيط حملات المؤثرين)"
+    ],
+    "active": true,
+    "order": 5
+  },
+  {
+    "id": "srv-6",
+    "nameEn": "Websites & SEO",
+    "nameAr": "المواقع وتحسين محركات البحث",
+    "descEn": "Corporate websites, modern e-commerce stores, high-converting landing pages, human-centered UI/UX design, and technical SEO optimization.",
+    "descAr": "مواقع الشركات، المتاجر الإلكترونية، صفحات الهبوط، تصميم تجربة وواجهة المستخدم، وتحسين محركات البحث.",
+    "category": "marketing",
+    "tagEn": "Digital",
+    "tagAr": "مواقع و SEO",
+    "items": [
+      "Corporate Websites (مواقع الشركات)",
+      "E-Commerce Stores (المتاجر الإلكترونية)",
+      "High-Converting Landing Pages (صفحات الهبوط)",
+      "UI/UX Experience Design (تصميم تجربة وواجهة المستخدم)",
+      "Search Engine Optimization (تحسين محركات البحث SEO)"
+    ],
+    "active": true,
+    "order": 6
+  },
+  {
+    "id": "srv-7",
+    "nameEn": "Commercial & Video Production",
+    "nameAr": "تصوير الفيديو والإعلانات",
+    "descEn": "Commercial advertising films, corporate and product showcases, social reels, indoor/outdoor cinema shooting, and storyboard execution.",
+    "descAr": "الإعلانات التجارية، فيديوهات الشركات والمنتجات، الريلز وفيديوهات السوشيال ميديا، التصوير الداخلي والخارجي، وكتابة السيناريو والـ Storyboard.",
+    "category": "production",
+    "tagEn": "Commercial",
+    "tagAr": "تصوير تجاري",
+    "items": [
+      "Commercial Ads (الإعلانات التجارية)",
+      "Corporate & Product Videos (فيديوهات الشركات والمنتجات)",
+      "Social Reels & Shorts (الريلز وفيديوهات السوشيال)",
+      "Indoor & Outdoor Filming (التصوير الداخلي والخارجي)",
+      "Storyboard & Production Prep (إعداد الـ Storyboard والإنتاج)"
+    ],
+    "active": true,
+    "order": 7
+  },
+  {
+    "id": "srv-8",
+    "nameEn": "Professional Photography",
+    "nameAr": "التصوير الفوتوغرافي",
+    "descEn": "High-end product photography, corporate team and executive portraits, event coverage, commercial still shoots, and campaign imagery.",
+    "descAr": "تصوير المنتجات، تصوير الشركات والبراندات، تصوير الفعاليات، جلسات التصوير التجارية والشخصية، وصور الحملات التسويقية.",
+    "category": "production",
+    "tagEn": "Photography",
+    "tagAr": "تصوير فوتوغرافي",
+    "items": [
+      "Product Photography (تصوير المنتجات)",
+      "Corporate & Brand Stills (تصوير الشركات والبراندات)",
+      "Event Photography (تصوير الفعاليات)",
+      "Commercial & Personal Shoots (جلسات التصوير التجارية والشخصية)",
+      "Marketing Campaign Imagery (صور الحملات التسويقية)"
+    ],
+    "active": true,
+    "order": 8
+  },
+  {
+    "id": "srv-9",
+    "nameEn": "Post-Production & Final Mastering",
+    "nameAr": "المونتاج والمعالجة النهائية",
+    "descEn": "Precision video editing, DaVinci Hollywood color grading, visual effects (VFX), multi-language subtitles/typography, and platform-tailored master exports.",
+    "descAr": "مونتاج الفيديو، تصحيح ومعالجة الألوان (Color Grading)، المؤثرات البصرية (VFX)، إضافة النصوص والترجمة، وتجهيز نسخ مناسبة للمنصات.",
+    "category": "production",
+    "tagEn": "Post",
+    "tagAr": "مونتاج ومعالجة",
+    "items": [
+      "Precision Video Editing (مونتاج الفيديو)",
+      "DaVinci Color Grading (تصحيح ومعالجة الألوان)",
+      "Visual Effects VFX (المؤثرات البصرية)",
+      "Subtitling & Text Motion (إضافة النصوص والترجمة)",
+      "Multi-Format Mastering (تجهيز نسخ المنصات)"
+    ],
+    "active": true,
+    "order": 9
+  },
+  {
+    "id": "srv-10",
+    "nameEn": "Motion Graphics & Infographics",
+    "nameAr": "الموشن جرافيك والإنفوجرافيك",
+    "descEn": "Engaging explainer videos, 2D/3D motion graphics, animated logo stingers, kinetic typography, and animated data infographics.",
+    "descAr": "فيديوهات توضيحية، موشن جرافيك، تحريك الشعارات، تحريك النصوص والعناوين، وفيديوهات البيانات والإحصائيات.",
+    "category": "production",
+    "tagEn": "Motion",
+    "tagAr": "موشن جرافيك",
+    "items": [
+      "Explainer Videos (فيديوهات توضيحية)",
+      "2D / 3D Motion Graphics (موشن جرافيك)",
+      "Logo Animations (تحريك الشعارات)",
+      "Kinetic Typography (تحريك النصوص والعناوين)",
+      "Data & Infographic Videos (فيديوهات البيانات والإحصائيات)"
+    ],
+    "active": true,
+    "order": 10
+  },
+  {
+    "id": "srv-11",
+    "nameEn": "Voiceover & Podcasts",
+    "nameAr": "التعليق الصوتي والبودكاست",
+    "descEn": "Professional studio voiceover recording, audio cleaning and mastering, multi-mic podcast production, audio editing, and final broadcast delivery.",
+    "descAr": "تسجيل التعليق الصوتي، تنقية ومعالجة الصوت، تسجيل وإنتاج البودكاست، مونتاج الحلقات الصوتية، وتجهيز الصوت للتسليم النهائي.",
+    "category": "production",
+    "tagEn": "Audio",
+    "tagAr": "تعليق وبودكاست",
+    "items": [
+      "Voiceover Recording (تسجيل التعليق الصوتي)",
+      "Audio Cleaning & Mastering (تنقية ومعالجة الصوت)",
+      "Podcast Studio Recording (تسجيل وإنتاج البودكاست)",
+      "Audio Episode Editing (مونتاج الحلقات الصوتية)",
+      "Broadcast Mastering (تجهيز الصوت للتسليم النهائي)"
+    ],
+    "active": true,
+    "order": 11
+  },
+  {
+    "id": "srv-12",
+    "nameEn": "Event Coverage & Live Streaming",
+    "nameAr": "تغطية الفعاليات والإنتاج المباشر",
+    "descEn": "Comprehensive photo and video coverage for conferences and launches, fast-turnaround event recap reels, multi-camera setups, and live broadcasting.",
+    "descAr": "تغطية الفعاليات بالفيديو والصور، تصوير المؤتمرات، فيديوهات ملخص الفعاليات، التصوير بأكثر من كاميرا، والبث المباشر.",
+    "category": "production",
+    "tagEn": "Live",
+    "tagAr": "فعاليات وبث",
+    "items": [
+      "Photo & Video Event Coverage (تغطية الفعاليات بالفيديو والصور)",
+      "Conference Documentation (تصوير المؤتمرات)",
+      "Event Recap Highlights (فيديوهات ملخص الفعاليات)",
+      "Multi-Camera Production (التصوير بأكثر من كاميرا)",
+      "Live Streaming Broadcast (البث المباشر المتخصص)"
+    ],
+    "active": true,
+    "order": 12
+  }
+]

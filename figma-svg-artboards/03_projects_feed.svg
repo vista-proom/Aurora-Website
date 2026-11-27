@@ -1,0 +1,99 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1850" width="1440" height="1850" style="background:#0A0F33; font-family:'Inter', sans-serif;">
+  <defs>
+    <linearGradient id="tealGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#00FFC0"/><stop offset="100%" stop-color="#00E6D3"/></linearGradient>
+  </defs>
+  <rect width="1440" height="1850" fill="#0A0F33"/>
+    <!-- Floating Nav -->
+  <rect x="100" y="32" width="1240" height="72" rx="36" fill="#12172E" fill-opacity="0.85" stroke="rgba(245,246,252,0.1)" stroke-width="1"/>
+  <text x="136" y="75" fill="#00FFC0" font-size="18" font-weight="bold">â¬¡ AURORA GROUP</text>
+  <text x="310" y="75" fill="#8B5CF6" font-size="11" font-weight="600">UR LIGHT</text>
+  <text x="560" y="74" fill="#F5F6FC" font-size="14" font-weight="600">Home</text> 
+  <text x="640" y="74" fill="#F5F6FC" font-size="14" opacity="0.8">About</text>
+  <text x="720" y="74" fill="#F5F6FC" font-size="14" font-weight="600">Services</text> 
+  <text x="815" y="74" fill="#00FFC0" font-size="14" font-weight="600">Projects</text> <circle cx="840" cy="85" r="2.5" fill="#00FFC0"/>
+  <text x="910" y="74" fill="#F5F6FC" font-size="14" font-weight="600">Team</text> 
+  <text x="985" y="74" fill="#F5F6FC" font-size="14" font-weight="600">Contact</text> 
+  <rect x="1190" y="48" width="120" height="40" rx="20" fill="url(#tealGrad)"/>
+  <text x="1225" y="73" fill="#0A0F33" font-size="13" font-weight="bold">PORTAL â†—</text>
+
+  <text x="100" y="170" fill="#F5F6FC" font-size="36" font-weight="bold">OUR WORK &amp; CASE STUDIES</text>
+  <text x="100" y="210" fill="#94A3B8" font-size="16">Documented proof of reach, visual excellence, and market authority.</text>
+
+  <!-- Filter tabs -->
+  <rect x="100" y="250" width="100" height="34" rx="17" fill="#00FFC0"/>
+  <text x="120" y="272" fill="#0A0F33" font-size="12" font-weight="bold">All (5)</text>
+  <rect x="220" y="250" width="140" height="34" rx="17" fill="#12172E"/>
+  <text x="238" y="272" fill="#F5F6FC" font-size="12">Fitness &amp; Sports</text>
+  <rect x="380" y="250" width="160" height="34" rx="17" fill="#12172E"/>
+  <text x="396" y="272" fill="#F5F6FC" font-size="12">Perfumes &amp; Luxury</text>
+  <rect x="560" y="250" width="120" height="34" rx="17" fill="#12172E"/>
+  <text x="580" y="272" fill="#F5F6FC" font-size="12">Medical</text>
+  <rect x="700" y="250" width="150" height="34" rx="17" fill="#12172E"/>
+  <text x="716" y="272" fill="#F5F6FC" font-size="12">Personal Brands</text>
+
+  <!-- Large Case Study 1 -->
+  <g transform="translate(100, 310)">
+    <rect width="1240" height="400" rx="24" fill="#12172E" stroke="rgba(245,246,252,0.08)"/>
+    <!-- 16:9 Left -->
+    <rect x="24" y="24" width="620" height="352" rx="16" fill="#0A0F33" stroke="rgba(0,255,192,0.2)"/>
+    <text x="200" y="190" fill="#00FFC0" font-size="15" font-weight="bold">â–¶ 16:9 VIDEO REEL PREVIEW</text>
+    <rect x="40" y="40" width="220" height="28" rx="14" fill="#1A213D"/>
+    <text x="55" y="58" fill="#F5F6FC" font-size="11" font-weight="bold">Taj Fragrance Commercial (0:45)</text>
+
+    <!-- Details Right -->
+    <text x="680" y="60" fill="#F5F6FC" font-size="22" font-weight="bold">Mohamed Raslan (Taj &amp; Supra)</text>
+    <text x="680" y="90" fill="#8B5CF6" font-size="14">Perfumes &amp; Luxury Lifestyle Goods</text>
+    <text x="680" y="140" fill="#00FFC0" font-size="13" font-weight="bold">VERIFIED METRICS DELIVERED:</text>
+    <text x="680" y="170" fill="#94A3B8" font-size="14">â€¢ 1,000,000+ Verified Video Views across Meta &amp; TikTok</text>
+    <text x="680" y="198" fill="#94A3B8" font-size="14">â€¢ +10,000 Qualified Luxury Lifestyle Followers</text>
+    <text x="680" y="226" fill="#94A3B8" font-size="14">â€¢ 100+ Direct VIP Order Inquiries</text>
+    <text x="680" y="270" fill="#F5F6FC" font-size="13" font-weight="bold">DELIVERABLES: Commercial Film, DaVinci Grade, Meta Ad Scaling</text>
+    <rect x="680" y="310" width="180" height="44" rx="22" fill="url(#tealGrad)"/>
+    <text x="710" y="337" fill="#0A0F33" font-size="13" font-weight="bold">â–¶ Watch Film (0:45)</text>
+    <rect x="880" y="310" width="180" height="44" rx="22" fill="#1A213D" stroke="rgba(245,246,252,0.1)"/>
+    <text x="915" y="337" fill="#F5F6FC" font-size="13">View Full Story â†—</text>
+  </g>
+
+  <!-- Large Case Study 2 -->
+  <g transform="translate(100, 740)">
+    <rect width="1240" height="400" rx="24" fill="#12172E" stroke="rgba(245,246,252,0.08)"/>
+    <rect x="24" y="24" width="620" height="352" rx="16" fill="#0A0F33" stroke="rgba(0,255,192,0.2)"/>
+    <text x="210" y="190" fill="#00FFC0" font-size="15" font-weight="bold">â–¶ 16:9 PROMO REEL PREVIEW</text>
+    <rect x="40" y="40" width="220" height="28" rx="14" fill="#1A213D"/>
+    <text x="55" y="58" fill="#F5F6FC" font-size="11" font-weight="bold">X Fighter Academy Launch (1:12)</text>
+
+    <text x="680" y="60" fill="#F5F6FC" font-size="22" font-weight="bold">X Fighter Academy Hub</text>
+    <text x="680" y="90" fill="#8B5CF6" font-size="14">Combat Sports &amp; Martial Arts Training</text>
+    <text x="680" y="140" fill="#00FFC0" font-size="13" font-weight="bold">VERIFIED METRICS DELIVERED:</text>
+    <text x="680" y="170" fill="#94A3B8" font-size="14">â€¢ 200,000+ Reach within targeted geographical zones</text>
+    <text x="680" y="198" fill="#94A3B8" font-size="14">â€¢ 350+ Academy Membership Inquiries Generated</text>
+    <text x="680" y="226" fill="#94A3B8" font-size="14">â€¢ Complete Facility Cinematic Video Tour</text>
+    <text x="680" y="270" fill="#F5F6FC" font-size="13" font-weight="bold">DELIVERABLES: Facility Video, Athlete Interviews, Sound Design</text>
+    <rect x="680" y="310" width="180" height="44" rx="22" fill="url(#tealGrad)"/>
+    <text x="710" y="337" fill="#0A0F33" font-size="13" font-weight="bold">â–¶ Watch Film (1:12)</text>
+    <rect x="880" y="310" width="180" height="44" rx="22" fill="#1A213D" stroke="rgba(245,246,252,0.1)"/>
+    <text x="915" y="337" fill="#F5F6FC" font-size="13">View Full Story â†—</text>
+  </g>
+
+    <g transform="translate(0, 1200)">
+    <rect width="1440" height="340" fill="#0A0F33" stroke="rgba(245,246,252,0.08)" stroke-width="1"/>
+    <text x="100" y="55" fill="#F5F6FC" font-size="22" font-weight="bold">AURORA GROUP</text>
+    <text x="100" y="85" fill="#94A3B8" font-size="13">UR LIGHT â€” Integrated Marketing &amp; Media Production</text>
+    <text x="100" y="115" fill="#8B5CF6" font-size="13">Cairo &amp; Alexandria, Egypt â€¢ Regional Operations</text>
+    <text x="440" y="55" fill="#00FFC0" font-size="13" font-weight="bold">SERVICES</text>
+    <text x="440" y="85" fill="#94A3B8" font-size="13">â€¢ Social Media Growth</text>
+    <text x="440" y="115" fill="#94A3B8" font-size="13">â€¢ Paid Ads &amp; Meta PPC</text>
+    <text x="440" y="145" fill="#94A3B8" font-size="13">â€¢ 4K Commercials &amp; Shoots</text>
+    <text x="740" y="55" fill="#00FFC0" font-size="13" font-weight="bold">CASE STUDIES</text>
+    <text x="740" y="85" fill="#94A3B8" font-size="13">â€¢ Mohamed Raslan (Taj &amp; Supra)</text>
+    <text x="740" y="115" fill="#94A3B8" font-size="13">â€¢ Omar Bakoush Personal Brand</text>
+    <text x="740" y="145" fill="#94A3B8" font-size="13">â€¢ Dr. Anwar Oref Authority</text>
+    <text x="1040" y="55" fill="#00FFC0" font-size="13" font-weight="bold">CONNECT</text>
+    <text x="1040" y="85" fill="#F5F6FC" font-size="13">contact.aurora.egy@gmail.com</text>
+    <text x="1040" y="115" fill="#94A3B8" font-size="13">+20 15 59192858</text>
+    <rect x="1040" y="145" width="180" height="36" rx="18" fill="#12172E" stroke="rgba(245,246,252,0.12)"/>
+    <text x="1065" y="168" fill="#F5F6FC" font-size="11" font-weight="bold">EMPLOYEE LOGIN â†—</text>
+    <line x1="100" y1="240" x2="1340" y2="240" stroke="rgba(245,246,252,0.08)"/>
+    <text x="100" y="280" fill="#94A3B8" font-size="12">Â© 2026 Aurora Group. All Rights Reserved. UR LIGHT.</text>
+  </g>
+</svg>

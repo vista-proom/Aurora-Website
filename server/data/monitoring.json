@@ -1,0 +1,325 @@
+{
+  "totalVisits": 1994,
+  "pageViews": {
+    "home": 1124,
+    "about": 353,
+    "services": 435,
+    "projects": 606,
+    "contact": 229,
+    "brief": 120,
+    "team": 42,
+    "admin": 79,
+    "004712b6-e9ad-4ed1-a255-50043ece70de": 1,
+    "login": 73,
+    "portal": 8,
+    "teaam": 1,
+    "amin": 1,
+    "a": 1,
+    "ad": 1,
+    "adm": 1,
+    "admi": 1,
+    "ADMIN": 2
+  },
+  "recentSessions": [
+    {
+      "ip": "::1",
+      "page": "/",
+      "referrer": "direct",
+      "time": "2026-11-27T02:08:34.152Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/admin",
+      "referrer": "http://localhost:3000/admin",
+      "time": "2026-11-27T02:07:45.943Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/",
+      "referrer": "direct",
+      "time": "2026-11-27T02:07:39.026Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/",
+      "referrer": "direct",
+      "time": "2026-11-27T02:07:35.159Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/",
+      "referrer": "direct",
+      "time": "2026-11-27T02:03:30.241Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "http://localhost:3000/admin",
+      "time": "2026-11-27T02:02:10.519Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/brief/22cb-mazen-salem",
+      "referrer": "direct",
+      "time": "2026-11-27T02:01:52.290Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/brief/22cb-mazen-salem",
+      "referrer": "direct",
+      "time": "2026-11-27T01:59:53.948Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/brief/22cb-mazen-salem",
+      "referrer": "direct",
+      "time": "2026-11-27T01:48:45.728Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/brief/9epu-mazen-hossam",
+      "referrer": "direct",
+      "time": "2026-11-27T01:48:21.462Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/brief/9epu-mazen-hossam",
+      "referrer": "direct",
+      "time": "2026-11-27T01:43:21.422Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/brief/77kk-mohamed-el-salam",
+      "referrer": "direct",
+      "time": "2026-11-27T01:42:47.335Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/brief/77kk-mohamed-el-salam",
+      "referrer": "direct",
+      "time": "2026-11-27T01:35:11.673Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/brief/rebw-ahmed-elsalam",
+      "referrer": "direct",
+      "time": "2026-11-27T01:35:07.018Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/brief/rebw-ahmed-elsalam",
+      "referrer": "direct",
+      "time": "2026-11-27T01:26:41.366Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/brief/rebw-ahmed-elsalam",
+      "referrer": "direct",
+      "time": "2026-11-27T01:12:54.566Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/brief/rebw-ahmed-elsalam",
+      "referrer": "direct",
+      "time": "2026-11-27T01:08:28.850Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "direct",
+      "time": "2026-11-27T01:07:30.819Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "http://localhost:3000/admin",
+      "time": "2026-11-27T01:07:17.710Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/portal",
+      "referrer": "direct",
+      "time": "2026-11-27T01:07:09.157Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/services",
+      "referrer": "direct",
+      "time": "2026-11-27T01:05:01.090Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/about",
+      "referrer": "direct",
+      "time": "2026-11-27T00:57:27.364Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/",
+      "referrer": "direct",
+      "time": "2026-11-27T00:57:06.899Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/admin",
+      "referrer": "http://localhost:3000/admin",
+      "time": "2026-11-27T00:29:50.553Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "http://localhost:3000/admin",
+      "time": "2026-11-27T00:15:34.983Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "direct",
+      "time": "2026-11-27T00:15:29.953Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "direct",
+      "time": "2026-11-27T00:15:11.109Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "direct",
+      "time": "2026-11-27T00:04:44.363Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "direct",
+      "time": "2026-11-27T00:04:33.776Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "direct",
+      "time": "2026-11-27T00:02:39.177Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "direct",
+      "time": "2026-11-27T00:00:16.545Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "direct",
+      "time": "2026-11-26T23:59:52.110Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "direct",
+      "time": "2026-11-26T23:51:00.852Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "direct",
+      "time": "2026-11-26T23:50:50.085Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "direct",
+      "time": "2026-11-26T23:41:58.257Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "direct",
+      "time": "2026-11-26T23:41:42.623Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "direct",
+      "time": "2026-11-26T23:29:37.881Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "direct",
+      "time": "2026-11-26T23:29:29.762Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "direct",
+      "time": "2026-11-26T23:28:11.999Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "direct",
+      "time": "2026-11-26T22:58:49.699Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "direct",
+      "time": "2026-11-26T22:56:52.173Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/brief/rebw-ahmed-elsalam",
+      "referrer": "direct",
+      "time": "2026-11-26T22:53:18.765Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/brief/rebw-ahmed-elsalam",
+      "referrer": "direct",
+      "time": "2026-11-26T22:46:20.220Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/brief/rebw-ahmed-elsalam",
+      "referrer": "direct",
+      "time": "2026-11-26T22:45:43.882Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/brief/28ek-omar-fathy",
+      "referrer": "direct",
+      "time": "2026-11-26T22:32:19.714Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/about",
+      "referrer": "direct",
+      "time": "2026-11-26T22:17:52.483Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/",
+      "referrer": "direct",
+      "time": "2026-11-26T22:17:18.158Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/",
+      "referrer": "direct",
+      "time": "2026-11-26T22:17:07.731Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/",
+      "referrer": "direct",
+      "time": "2026-11-26T22:17:07.527Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/",
+      "referrer": "direct",
+      "time": "2026-11-26T22:17:02.034Z"
+    }
+  ]
+}

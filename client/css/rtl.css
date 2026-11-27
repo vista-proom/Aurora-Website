@@ -1,0 +1,116 @@
+/* =========================================================================
+   AURORA GROUP — ARABIC & RTL STYLES
+   - Font: Alexandria (Modern, wide geometric Arabic sans)
+   - Layouts, drawers, chevrons mirror in RTL
+   - Logos, play buttons, photos, and phone numbers DO NOT flip
+   - Strict Western digits (0-9) preserved
+   ========================================================================= */
+
+[dir="rtl"],
+[dir="rtl"] body,
+[dir="rtl"] input,
+[dir="rtl"] textarea,
+[dir="rtl"] select,
+[dir="rtl"] button {
+  font-family: var(--font-ar);
+  line-height: 1.75;
+}
+
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] h4,
+[dir="rtl"] h5,
+[dir="rtl"] h6 {
+  font-family: var(--font-ar);
+  letter-spacing: normal;
+  line-height: 1.4;
+}
+
+[dir="rtl"] .section-eyebrow {
+  letter-spacing: 0.02em;
+}
+
+/* Text alignment mirroring */
+[dir="rtl"] .section-header.text-left {
+  text-align: right;
+}
+
+[dir="rtl"] .section-header.text-left .section-subtitle {
+  margin-right: 0;
+  margin-left: auto;
+  text-align: right;
+}
+
+[dir="rtl"] .hero-content {
+  text-align: right;
+}
+
+[dir="rtl"] .hero-ctas {
+  justify-content: flex-start;
+}
+
+/* Header & Nav mirroring */
+[dir="rtl"] .header-brand {
+  flex-direction: row;
+}
+
+[dir="rtl"] .header-actions {
+  flex-direction: row;
+}
+
+/* Close button on modals & drawers */
+[dir="rtl"] .close-btn {
+  right: auto;
+  left: 18px;
+}
+
+/* Drawer panel slide from left in RTL */
+[dir="rtl"] .drawer-panel {
+  right: auto;
+  left: 0;
+  border-left: none;
+  border-right: 1px solid var(--border-default);
+  transform: translateX(-100%);
+}
+
+[dir="rtl"] .drawer-panel.active {
+  transform: translateX(0);
+}
+
+/* Form Labels & hints */
+[dir="rtl"] .form-label {
+  text-align: right;
+}
+
+[dir="rtl"] .form-label .required {
+  margin-left: 0;
+  margin-right: 2px;
+}
+
+/* DO NOT FLIP phone numbers, numbers band, video controls */
+[dir="rtl"] .phone-number,
+[dir="rtl"] .number-val,
+[dir="rtl"] [dir="ltr"] {
+  direction: ltr;
+  display: inline-block;
+  unicode-bidi: isolate;
+}
+
+/* Checkbox label */
+[dir="rtl"] .checkbox-label {
+  text-align: right;
+}
+
+/* List bullets & indentation */
+[dir="rtl"] ul,
+[dir="rtl"] ol {
+  padding-left: 0;
+  padding-right: 20px;
+}
+
+/* Progress bar filling direction */
+[dir="rtl"] .progress-bar-fill {
+  right: 0;
+  left: auto;
+}

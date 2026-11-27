@@ -1,0 +1,18 @@
+{
+  "officeVenue": "Sharks Office Space",
+  "addressStreet": "Abdelsalam El Shazly St, above Next Bank",
+  "city": "Egypt",
+  "contactPhone": "+20 15 59192858",
+  "contactEmail": "contact.aurora.egy@gmail.com",
+  "instagramMarketing": "@aurora__marketing",
+  "instagramProduction": "@aurora__media_production",
+  "googleMapsUrl": "https://maps.google.com",
+  "workingHours": "Sunday – Thursday: 10:00 AM – 6:00 PM",
+  "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1vr1QTpFCI9KxtTcsszrVAKZoo0CvWHK4KWU_843Rvi4/edit?usp=sharing",
+  "googleSheetsWebhookUrl": "https://script.google.com/macros/s/AKfycby_XbAJfKa-MAAIrZUZ_VjL10uHQH6ZoF2y_UEkRLOXaEpaGjkFeL1AOjp4_b5NT4Q9/exec",
+  "mongodbUri": "",
+  "firebaseProjectId": "aurora-group-ae765",
+  "firebaseApiKey": "AIzaSyBClzWRwScLw4HrhiC8_IbCdTtwcnpcEBs",
+  "firebaseAuthDomain": "aurora-group-ae765.firebaseapp.com",
+  "enableTeamDirectory": false
+}

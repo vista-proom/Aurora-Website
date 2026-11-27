@@ -1,0 +1,11 @@
+{
+  "name": "Aurora Group — Master Blueprint Wireframe Generator",
+  "id": "aurora-group-master-blueprint-generator",
+  "api": "1.0.0",
+  "main": "code.js",
+  "capabilities": [],
+  "enableProposedApi": false,
+  "editorType": [
+    "figma"
+  ]
+}

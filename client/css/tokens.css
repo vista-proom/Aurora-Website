@@ -1,0 +1,241 @@
+/* =========================================================================
+   AURORA GROUP — SEMANTIC DESIGN TOKENS
+   Version: 2.0 (Derived from Official Brand Identity Guidelines & SRS v1.0)
+   Built on dual-theme architecture (Light & Dark).
+   Rule: Components use ONLY semantic tokens.
+   ========================================================================= */
+
+/* Satoshi — Primary Brand Typography (Wide, clean, modern geometric sans) */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Variable.woff2') format('woff2-variations'),
+       url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Variable.woff2') format('woff2'),
+       url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Variable.ttf') format('truetype');
+  font-weight: 300 900;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Light.woff2') format('woff2'),
+       url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Light.woff') format('woff'),
+       url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Regular.woff2') format('woff2'),
+       url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Regular.woff') format('woff'),
+       url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Medium.woff2') format('woff2'),
+       url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Medium.woff') format('woff'),
+       url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Bold.woff2') format('woff2'),
+       url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Bold.woff') format('woff'),
+       url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Black.woff2') format('woff2'),
+       url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Black.woff') format('woff'),
+       url('/assets/fonts/satoshi/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'DM Serif Display';
+  src: url('/assets/fonts/dm-serif/DMSerifDisplay-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DM Serif Display';
+  src: url('/assets/fonts/dm-serif/DMSerifDisplay-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+:root {
+  /* Brand Core Constants (from Aurora Brand Identity PDF) */
+  --brand-vibrant-purple:    #6A00F4;
+  --brand-deep-blue:         #0A0F33;
+  --brand-electric-teal:     #00FFC6;
+  --brand-aurora-white:      #F5F6FC;
+
+  /* Secondary Brand Constants */
+  --brand-midnight-navy:     #12172E;
+  --brand-royal-indigo:      #3A1D6E;
+  --brand-cosmic-violet:     #8B5CF6;
+  --brand-ultraviolet-blue:  #5A00A1;
+  --brand-steel-gray:        #5A6275;
+  --brand-soft-lilac:        #B8A1E3;
+  --brand-glacier-blue:      #A0E9FF;
+  --brand-neon-aqua:         #00E6D3;
+
+  /* Border Radii (Rounded buttons & cards, no pill buttons) */
+  --radius-xs:    4px;
+  --radius-sm:    6px;
+  --radius-md:    10px;
+  --radius-card:  14px;
+  --radius-modal: 16px;
+  --radius-pill:  9999px; /* Only for small tags/pills, never primary buttons */
+
+  /* Typography Stacks: Wide, legible, modern geometric sans */
+  --font-en: 'Satoshi', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-ar: 'Alexandria', 'Satoshi', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'DM Serif Display', Georgia, serif;
+
+  /* Theme Transitions */
+  --theme-transition: background-color 220ms ease, color 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+/* Universal Logo Theme Visibility */
+[data-theme="light"] .logo-for-dark { display: none !important; }
+[data-theme="light"] .logo-for-light {
+  display: inline-block !important;
+  filter: contrast(1.1) !important;
+}
+[data-theme="dark"] .logo-for-light { display: none !important; }
+[data-theme="dark"] .logo-for-dark { display: inline-block !important; }
+
+/* Required star */
+.required-star {
+  color: var(--status-error, #D14343);
+  margin-inline-start: 4px;
+  font-weight: 700;
+}
+
+/* -------------------------------------------------------------------------
+   LIGHT MODE TOKENS (Default for public site and client brief)
+   ------------------------------------------------------------------------- */
+:root, [data-theme="light"] {
+  --surface-page:       #F5F6FC;
+  --surface-raised:     #FFFFFF;
+  --surface-card:       #FFFFFF;
+  --surface-sunken:     #EBEDF7;
+  --surface-band:       #0A0F33; /* Dark band used in Hero, Numbers, CTA, Footer */
+  --surface-overlay:    rgba(10, 15, 51, 0.55);
+
+  --border-default:     rgba(10, 15, 51, 0.10);
+  --border-subtle:      rgba(10, 15, 51, 0.05);
+  --border-strong:      rgba(10, 15, 51, 0.22);
+
+  --text-primary:       #0A0F33;
+  --text-body:          #3B4160;
+  --text-muted:         #5A6275;
+  --text-on-band:       #F5F6FC;
+  --text-on-band-muted: #B8BCD6;
+
+  /* Accent & Action Tokens */
+  --accent-action:      #6A00F4; /* Primary action on light backgrounds */
+  --accent-action-hover:#5500C4;
+  --accent-action-text: #FFFFFF;
+  --accent-link:        #6A00F4;
+  --accent-hover:       #8B5CF6;
+  --accent-highlight:   #00E6D3; /* Bands only on light */
+  --timeline-accent:    #0D9488; /* High-contrast teal for process nodes in light mode */
+  --focus-ring:         2px solid #6A00F4;
+
+  /* Feedback / Status Tokens */
+  --status-success:     #1E9E6A;
+  --status-success-bg:  rgba(30, 158, 106, 0.10);
+  --status-error:       #D14343;
+  --status-error-bg:    rgba(209, 67, 67, 0.10);
+  --status-warning:     #C98A1B;
+  --status-warning-bg:  rgba(201, 138, 27, 0.10);
+  --status-info:        #3B82F6;
+  --status-info-bg:     rgba(59, 130, 246, 0.10);
+
+  /* Shadows */
+  --shadow-sm:          0 1px 2px rgba(10, 15, 51, 0.05);
+  --shadow-card:        0 1px 3px rgba(10, 15, 51, 0.06), 0 8px 24px rgba(10, 15, 51, 0.05);
+  --shadow-raised:      0 12px 32px rgba(10, 15, 51, 0.10);
+  --shadow-header:      0 1px 3px rgba(10, 15, 51, 0.05);
+
+  /* Image treatment */
+  --img-brightness:     1.0;
+
+  /* Wordmark color */
+  --logo-wordmark:      #0A0F33;
+}
+
+/* -------------------------------------------------------------------------
+   DARK MODE TOKENS (Deep near-black bands so sections stay distinct)
+   ------------------------------------------------------------------------- */
+[data-theme="dark"] {
+  --surface-page:       #0A0F33;
+  --surface-raised:     #12172E;
+  --surface-card:       #12172E;
+  --surface-sunken:     #0E1330;
+  --surface-band:       #060923; /* Deeper near-black so hero, numbers & footer stand out */
+  --surface-overlay:    rgba(0, 0, 0, 0.75);
+
+  --border-default:     rgba(255, 255, 255, 0.09);
+  --border-subtle:      rgba(255, 255, 255, 0.05);
+  --border-strong:      rgba(255, 255, 255, 0.18);
+
+  --text-primary:       #F5F6FC;
+  --text-body:          #B8BCD6;
+  --text-muted:         #7C83A0;
+  --text-on-band:       #F5F6FC;
+  --text-on-band-muted: #8E95B8;
+
+  /* Accent & Action Tokens */
+  --accent-action:      #00FFC6; /* Electric teal is primary action in dark mode */
+  --accent-action-hover:#00E6D3;
+  --accent-action-text: #060923;
+  --accent-link:        #B8A1E3;
+  --accent-hover:       #00FFC6;
+  --accent-highlight:   #00FFC6;
+  --timeline-accent:    #00FFC6; /* Electric teal is vibrant and high-contrast in dark mode */
+  --focus-ring:         2px solid #00FFC6;
+
+  /* Feedback / Status Tokens */
+  --status-success:     #34D399;
+  --status-success-bg:  rgba(52, 211, 153, 0.14);
+  --status-error:       #F87171;
+  --status-error-bg:    rgba(248, 113, 113, 0.14);
+  --status-warning:     #FBBF24;
+  --status-warning-bg:  rgba(251, 191, 36, 0.14);
+  --status-info:        #60A5FA;
+  --status-info-bg:     rgba(96, 165, 250, 0.14);
+
+  /* Shadows */
+  --shadow-sm:          0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-card:        0 1px 3px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-raised:      0 12px 32px rgba(0, 0, 0, 0.5);
+  --shadow-header:      0 1px 3px rgba(0, 0, 0, 0.3);
+
+  /* Image treatment: subtle reduction to blend with dark surface */
+  --img-brightness:     0.94;
+
+  /* Wordmark color */
+  --logo-wordmark:      #FFFFFF;
+}

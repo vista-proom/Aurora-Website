@@ -1,0 +1,40 @@
+{
+  "speedSeconds": 20,
+  "logos": [
+    {
+      "id": "ml-13",
+      "name": "Centro Mall",
+      "src": "/assets/logos/centro mall.png"
+    },
+    {
+      "id": "ml-14",
+      "name": "Friends Club",
+      "src": "/assets/logos/friends club.png"
+    },
+    {
+      "id": "ml-15",
+      "name": "عيادات النخبة التجميلية",
+      "src": "/assets/logos/عيادات النخبة التجميلية.png"
+    },
+    {
+      "id": "ml-16",
+      "name": "عيادات النخبة التخصصية",
+      "src": "/assets/logos/عيادات النخبة التخصصية.png"
+    },
+    {
+      "id": "ml-17",
+      "name": "Dr. Mohamed Anwar Orief Clinic",
+      "src": "/assets/logos/Dr Mohamed Anwar Orief Clinic.png"
+    },
+    {
+      "id": "ml-1795744996724",
+      "name": "Sharks",
+      "src": "/assets/uploads/SHARKS_CO-WORKING_SPACE_jpg_1795744996710_fb3e77a4db42.jpg"
+    },
+    {
+      "id": "ml-1795745306437",
+      "name": "Nabt",
+      "src": "/assets/uploads/_____NABT_jpg_1795745306425_4b98e689436d.jpg"
+    }
+  ]
+}

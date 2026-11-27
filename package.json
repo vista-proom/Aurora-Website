@@ -1,0 +1,36 @@
+{
+  "name": "aurora-group-platform",
+  "version": "1.0.0",
+  "description": "Aurora Group Corporate Website, Client Brief Engine & Operations Portal",
+  "main": "server/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node --watch server/server.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "aurora-group",
+    "egypt",
+    "agency",
+    "marketing",
+    "production"
+  ],
+  "author": "Anti-Gravity / Aurora Group",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.5.1",
+    "compression": "^1.8.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "firebase-admin": "^14.5.0",
+    "googleapis": "^189.0.0",
+    "helmet": "^8.0.0",
+    "mongoose": "^8.10.1",
+    "nodemailer": "^10.3.1"
+  }
+}

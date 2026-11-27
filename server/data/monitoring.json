@@ -1,5 +1,5 @@
 {
-  "totalVisits": 1994,
+  "totalVisits": 1996,
   "pageViews": {
     "home": 1124,
     "about": 353,
@@ -10,7 +10,7 @@
     "team": 42,
     "admin": 79,
     "004712b6-e9ad-4ed1-a255-50043ece70de": 1,
-    "login": 73,
+    "login": 75,
     "portal": 8,
     "teaam": 1,
     "amin": 1,
@@ -21,6 +21,18 @@
     "ADMIN": 2
   },
   "recentSessions": [
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "http://localhost:3000/admin",
+      "time": "2026-11-27T02:32:42.398Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "http://localhost:3000/brief/22cb-mazen-salem",
+      "time": "2026-11-27T02:32:42.147Z"
+    },
     {
       "ip": "::1",
       "page": "/",
@@ -308,18 +320,6 @@
       "page": "/",
       "referrer": "direct",
       "time": "2026-11-26T22:17:07.731Z"
-    },
-    {
-      "ip": "::1",
-      "page": "/",
-      "referrer": "direct",
-      "time": "2026-11-26T22:17:07.527Z"
-    },
-    {
-      "ip": "::1",
-      "page": "/",
-      "referrer": "direct",
-      "time": "2026-11-26T22:17:02.034Z"
     }
   ]
 }

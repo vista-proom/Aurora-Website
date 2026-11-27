@@ -1,5 +1,19 @@
 [
   {
+    "id": "log-1795746762114",
+    "action": "User Logout",
+    "user": "admin@aurora.eg",
+    "timestamp": "2026-11-27T02:32:42.114Z",
+    "details": "{}"
+  },
+  {
+    "id": "log-1795746762099",
+    "action": "User Logout",
+    "user": "admin@aurora.eg",
+    "timestamp": "2026-11-27T02:32:42.099Z",
+    "details": "{}"
+  },
+  {
     "id": "log-1795745310145",
     "action": "Partner Logos Marquee Updated",
     "user": "admin@aurora.eg",
@@ -1384,19 +1398,5 @@
     "user": "manager@aurora.eg",
     "timestamp": "2026-10-19T16:01:38.497Z",
     "details": "{\"token\":\"jrdo-df\",\"clientName\":\"df\",\"brandName\":\"sdf\",\"expiryDate\":\"2026-11-18T16:01:38.495Z\"}"
-  },
-  {
-    "id": "log-1792425617338",
-    "action": "Client Brief Submitted by Client",
-    "user": "Hesham Mohamed",
-    "timestamp": "2026-10-19T16:00:17.338Z",
-    "details": "{\"token\":\"5eig-hesham-mohamed\",\"payload\":{\"fullName\":\"Hesham Mohamed\",\"role\":\"Owner\",\"brandName\":\"Egy2Wheels\",\"phone\":\"01098559170\",\"email\":\"hmohamed5@wayfair.com\",\"budget\":\"10,000 - 20,000 EGP (Startup)\",\"businessModel\":\".\",\"yearsInOperation\":\"0\",\"branches\":\"1\",\"differentiator\":\"0\",\"primaryGoals\":\"ROAS\",\"kpis\":\"REV\",\"digitalAssetsLinks\":\"nn\",\"assetsReady\":\"No, starting from scratch\",\"driveLink\":\"000\",\"competitors\":\"0\",\"visualTasteDislikes\":\"0\",\"meetVenue\":\"Google Meet\",\"meetingDatePreference\":\"000\",\"meetingAttendees\":\"ndsoif& oidfsks& ihjnsp;\"}}"
-  },
-  {
-    "id": "log-1792425427264",
-    "action": "Client Brief Link Created",
-    "user": "manager@aurora.eg",
-    "timestamp": "2026-10-19T15:57:07.264Z",
-    "details": "{\"token\":\"5eig-hesham-mohamed\",\"clientName\":\"Hesham Mohamed\",\"brandName\":\"Egy2Wheels\",\"expiryDate\":\"2026-11-18T15:57:07.263Z\"}"
   }
 ]

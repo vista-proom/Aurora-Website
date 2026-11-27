@@ -3013,8 +3013,11 @@
       </form>
 
       <div id="generatedLinkSuccess" style="display:none; margin-top:24px; padding-top:20px; border-top:1px solid var(--border-default);">
-        <p style="font-weight:700; margin-bottom:6px;">Link Generated:</p>
-        <code id="generatedLinkUrl" style="display:block; background:var(--surface-sunken); padding:10px; border-radius:var(--radius-sm); margin-bottom:16px; word-break:break-all;"></code>
+        <p style="font-weight:700; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
+          <span>Link Generated:</span>
+          <span id="generatedLinkCopyHint" style="font-size:0.78rem; font-weight:600; color:var(--text-muted);">Click link to copy</span>
+        </p>
+        <code id="generatedLinkUrl" title="Click to copy link" onclick="window.auroraCopyGeneratedLink && window.auroraCopyGeneratedLink()" style="display:block; background:var(--surface-sunken); padding:10px; border-radius:var(--radius-sm); margin-bottom:16px; word-break:break-all; cursor:pointer; user-select:all; transition:background 0.15s ease;"></code>
         <div class="form-group">
           <label class="form-label">Ready WhatsApp Message (Arabic):</label>
           <textarea id="generatedWaText" class="form-textarea" rows="4" dir="rtl"></textarea>

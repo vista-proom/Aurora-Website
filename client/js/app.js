@@ -3274,10 +3274,18 @@ export async function handleGenerateBriefSubmit(e) {
       const waTemplate = `أهلاً أ/ ${clientName}، عشان اجتماعنا في Sharks Office Space يطلع بأحسن نتيجة وموفر لوقت حضرتك، ياريت تملا استبيان المشروع ده: ${url}\nمستنيين لقاءنا!`;
       const waBox = document.getElementById('generatedWaText');
       const urlBox = document.getElementById('generatedLinkUrl');
+      const copyHint = document.getElementById('generatedLinkCopyHint');
       const successBox = document.getElementById('generatedLinkSuccess');
 
       if (waBox) waBox.value = waTemplate;
-      if (urlBox) urlBox.textContent = url;
+      if (urlBox) {
+        urlBox.textContent = url;
+        urlBox.dataset.url = url;
+      }
+      if (copyHint) {
+        copyHint.textContent = 'Click link to copy';
+        copyHint.style.color = 'var(--text-muted)';
+      }
       if (successBox) successBox.style.display = 'block';
 
       loadAdminBriefs();
@@ -3299,6 +3307,28 @@ export function copyWhatsAppMessage() {
   navigator.clipboard.writeText(text);
   alert('WhatsApp message copied to clipboard!');
 }
+
+export async function copyGeneratedBriefLink() {
+  const urlBox = document.getElementById('generatedLinkUrl');
+  const copyHint = document.getElementById('generatedLinkCopyHint');
+  const url = urlBox?.dataset?.url || urlBox?.textContent?.trim() || '';
+  if (!url) return;
+
+  try {
+    await navigator.clipboard.writeText(url);
+    if (copyHint) {
+      copyHint.textContent = 'Copied! ✓';
+      copyHint.style.color = '#10b981';
+      setTimeout(() => {
+        copyHint.textContent = 'Click link to copy';
+        copyHint.style.color = 'var(--text-muted)';
+      }, 2200);
+    }
+  } catch {
+    alert('Failed to copy link. Please copy it manually.');
+  }
+}
+window.auroraCopyGeneratedLink = copyGeneratedBriefLink;
 
 export function openExtendBriefModal(token) {
   document.getElementById('extendBriefTokenInput').value = token;

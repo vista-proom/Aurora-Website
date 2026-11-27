@@ -29,6 +29,7 @@ import { emailService } from './services/emailService.js';
 import { dbService } from './services/dbService.js';
 import { firebaseAuthService } from './services/firebaseAuthService.js';
 import { firebaseDbService } from './services/firebaseDbService.js';
+import { cloudinaryService } from './services/cloudinaryService.js';
 import {
   hashPassword,
   verifyPassword,
@@ -92,6 +93,7 @@ app.use(helmet({
         "'self'",
         'data:',
         'blob:',
+        'https://res.cloudinary.com',
         'https:',
         'http:'
       ],
@@ -215,7 +217,7 @@ const SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15-minute sliding inactivity windo
  * Inspects HttpOnly signed cookie or Bearer token, verifies HMAC signature,
  * validates against staff directory, checks inactivity timeout, and enforces RBAC roles.
  */
-const requireAuth = (allowedRoles = null) => (req, res, next) => {
+const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, res, next) => {
   let token = req.cookies?.aurora_session;
 
   // Fallback to Authorization: Bearer token if cookie is not present
@@ -240,8 +242,13 @@ const requireAuth = (allowedRoles = null) => (req, res, next) => {
     return res.status(403).json({ success: false, error: 'Unauthorized user or deactivated account.' });
   }
 
-  // Enforce Role Permissions
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
+  // Enforce Role & Granular Staff Permissions
+  const hasPerm = requiredPermissions
+    ? (Array.isArray(requiredPermissions) ? requiredPermissions : [requiredPermissions])
+        .some((perm) => user.permissions && user.permissions[perm] === true)
+    : false;
+
+  if (allowedRoles && !allowedRoles.includes(user.role) && !hasPerm) {
     return res.status(403).json({ success: false, error: 'Access denied: Insufficient permissions.' });
   }
 
@@ -936,7 +943,22 @@ const requireAuth = (allowedRoles = null) => (req, res, next) => {
   app.post('/api/projects', requireAuth(), async (req, res) => {
     try {
       const authorEmail = req.authUser.email;
-      const newProject = store.addProject(req.body, authorEmail);
+      const body = { ...req.body };
+
+      if (cloudinaryService.isConfigured()) {
+        if (Array.isArray(body.photos)) {
+          body.photos = await cloudinaryService.processProjectPhotos(body.photos, 'aurora/projects');
+        }
+        if (Array.isArray(body.gallery)) {
+          body.gallery = await cloudinaryService.processProjectPhotos(body.gallery, 'aurora/projects');
+        }
+        if (typeof body.heroPhoto === 'string' && body.heroPhoto.startsWith('data:image/')) {
+          const uploadedHero = await cloudinaryService.uploadDataUrl(body.heroPhoto, { folder: 'aurora/projects' });
+          body.heroPhoto = uploadedHero.url;
+        }
+      }
+
+      const newProject = store.addProject(body, authorEmail);
       emailService.sendProjectUploadedAlert(newProject, authorEmail).catch(() => { });
       res.status(201).json({ success: true, message: 'Project submitted for manager review', data: newProject });
     } catch (err) {
@@ -944,31 +966,57 @@ const requireAuth = (allowedRoles = null) => (req, res, next) => {
     }
   });
 
-  app.patch('/api/projects/:id/approve', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.patch('/api/projects/:id/approve', requireAuth(['super_admin', 'manager'], 'canApproveProjects'), (req, res) => {
     const updated = store.approveProject(req.params.id, req.authUser.email);
     if (!updated) return res.status(404).json({ success: false, error: 'Project not found' });
     res.json({ success: true, data: updated });
   });
 
-  app.patch('/api/projects/:id/publish', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.patch('/api/projects/:id/publish', requireAuth(['super_admin', 'manager'], 'canPublishProjects'), (req, res) => {
     const updated = store.publishProject(req.params.id, req.authUser.email);
     if (!updated) return res.status(404).json({ success: false, error: 'Project not found' });
     res.json({ success: true, data: updated });
   });
 
-  app.patch('/api/projects/:id', requireAuth(['super_admin', 'manager']), (req, res) => {
-    const updated = store.updateProject(req.params.id, req.body, req.authUser.email);
-    if (!updated) return res.status(404).json({ success: false, error: 'Project not found' });
-    res.json({ success: true, data: updated });
+  app.patch('/api/projects/:id', requireAuth(['super_admin', 'manager']), async (req, res) => {
+    try {
+      const updates = { ...req.body };
+      if (cloudinaryService.isConfigured()) {
+        if (Array.isArray(updates.photos)) {
+          updates.photos = await cloudinaryService.processProjectPhotos(updates.photos, 'aurora/projects');
+        }
+        if (Array.isArray(updates.gallery)) {
+          updates.gallery = await cloudinaryService.processProjectPhotos(updates.gallery, 'aurora/projects');
+        }
+      }
+      const updated = store.updateProject(req.params.id, updates, req.authUser.email);
+      if (!updated) return res.status(404).json({ success: false, error: 'Project not found' });
+      res.json({ success: true, data: updated });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
   });
 
-  app.put('/api/projects/:id', requireAuth(['super_admin', 'manager']), (req, res) => {
-    const updated = store.updateProject(req.params.id, req.body, req.authUser.email);
-    if (!updated) return res.status(404).json({ success: false, error: 'Project not found' });
-    res.json({ success: true, message: 'Project updated successfully', data: updated });
+  app.put('/api/projects/:id', requireAuth(['super_admin', 'manager']), async (req, res) => {
+    try {
+      const updates = { ...req.body };
+      if (cloudinaryService.isConfigured()) {
+        if (Array.isArray(updates.photos)) {
+          updates.photos = await cloudinaryService.processProjectPhotos(updates.photos, 'aurora/projects');
+        }
+        if (Array.isArray(updates.gallery)) {
+          updates.gallery = await cloudinaryService.processProjectPhotos(updates.gallery, 'aurora/projects');
+        }
+      }
+      const updated = store.updateProject(req.params.id, updates, req.authUser.email);
+      if (!updated) return res.status(404).json({ success: false, error: 'Project not found' });
+      res.json({ success: true, message: 'Project updated successfully', data: updated });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
   });
 
-  app.patch('/api/projects/:id/reject', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.patch('/api/projects/:id/reject', requireAuth(['super_admin', 'manager'], 'canApproveProjects'), (req, res) => {
     const reason = sanitizeString(req.body.reason || 'Requirements not met');
     const updated = store.rejectProject(req.params.id, reason, req.authUser.email);
     if (!updated) return res.status(404).json({ success: false, error: 'Project not found' });
@@ -1017,8 +1065,8 @@ const requireAuth = (allowedRoles = null) => (req, res, next) => {
     res.json({ success: true, data: updated });
   });
 
-  // Secure Avatar Upload with MIME validation & magic byte check
-  app.post('/api/users/upload-avatar', requireAuth(), (req, res) => {
+  // Secure Avatar Upload with MIME validation & magic byte check (Cloudinary + local fallback)
+  app.post('/api/users/upload-avatar', requireAuth(), async (req, res) => {
     const { dataUrl, filename } = req.body;
     const validation = validateImageUpload(dataUrl, filename, 5 * 1024 * 1024);
     if (!validation.valid) {
@@ -1026,21 +1074,26 @@ const requireAuth = (allowedRoles = null) => (req, res, next) => {
     }
 
     try {
-      const uploadDir = path.join(CLIENT_DIR, 'assets', 'uploads');
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
+      let publicUrl = '';
+      if (cloudinaryService.isConfigured()) {
+        const uploaded = await cloudinaryService.uploadDataUrl(dataUrl, { folder: 'aurora/avatars' });
+        publicUrl = uploaded.url;
+      } else {
+        const uploadDir = path.join(CLIENT_DIR, 'assets', 'uploads');
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        const filePath = path.join(uploadDir, validation.safeFilename);
+        fs.writeFileSync(filePath, validation.buffer);
+        publicUrl = `/assets/uploads/${validation.safeFilename}`;
       }
 
-      const filePath = path.join(uploadDir, validation.safeFilename);
-      fs.writeFileSync(filePath, validation.buffer);
-
-      const publicUrl = `/assets/uploads/${validation.safeFilename}`;
       store.updateUserProfile(req.authUser.email, { photo: publicUrl });
-      store.logActivity('Avatar Uploaded', req.authUser.email, { publicUrl });
+      store.logActivity('Avatar Uploaded', req.authUser.email, { publicUrl, storage: cloudinaryService.isConfigured() ? 'cloudinary' : 'local' });
 
       res.status(201).json({ success: true, url: publicUrl });
     } catch (err) {
-      res.status(500).json({ success: false, error: 'Failed to save avatar image' });
+      res.status(500).json({ success: false, error: 'Failed to save avatar image: ' + err.message });
     }
   });
 
@@ -1081,12 +1134,12 @@ const requireAuth = (allowedRoles = null) => (req, res, next) => {
     }
   });
 
-  app.get('/api/inquiries', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.get('/api/inquiries', requireAuth(['super_admin', 'manager'], 'canViewCRM'), (req, res) => {
     const list = store.getInquiries();
     res.json({ success: true, count: list.length, data: list });
   });
 
-  app.patch('/api/inquiries/:id/status', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.patch('/api/inquiries/:id/status', requireAuth(['super_admin', 'manager'], 'canViewCRM'), (req, res) => {
     const { status, note } = req.body;
     if (!status) return res.status(400).json({ success: false, error: 'Status is required' });
 
@@ -1129,7 +1182,7 @@ const requireAuth = (allowedRoles = null) => (req, res, next) => {
   // -----------------------------------------------------------------------------
   // 9. CLIENT BRIEFS (KYC ENGINE)
   // -----------------------------------------------------------------------------
-  app.get('/api/briefs', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.get('/api/briefs', requireAuth(['super_admin', 'manager'], 'canViewBriefs'), (req, res) => {
     const briefs = store.getBriefs();
     res.json({ success: true, count: briefs.length, data: briefs });
   });
@@ -1159,7 +1212,7 @@ const requireAuth = (allowedRoles = null) => (req, res, next) => {
     });
   });
 
-  app.post('/api/briefs/generate', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.post('/api/briefs/generate', requireAuth(['super_admin', 'manager'], 'canGenerateBriefs'), (req, res) => {
     const clientName = sanitizeString(req.body.clientName || '').trim();
     const brandName = sanitizeString(req.body.brandName || '').trim();
     const daysValid = Number(req.body.daysValid) || 30;
@@ -1190,7 +1243,7 @@ const requireAuth = (allowedRoles = null) => (req, res, next) => {
     }
   });
 
-  app.patch('/api/briefs/:token/extend', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.patch('/api/briefs/:token/extend', requireAuth(['super_admin', 'manager'], 'canViewBriefs'), (req, res) => {
     const cleanToken = sanitizeString(req.params.token);
     const target = req.body.targetDate || req.body.days || 14;
     const updated = store.extendBriefExpiry(cleanToken, target, req.authUser.email);
@@ -1198,14 +1251,14 @@ const requireAuth = (allowedRoles = null) => (req, res, next) => {
     res.json({ success: true, data: updated });
   });
 
-  app.patch('/api/briefs/:token/deactivate', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.patch('/api/briefs/:token/deactivate', requireAuth(['super_admin', 'manager'], 'canViewBriefs'), (req, res) => {
     const cleanToken = sanitizeString(req.params.token);
     const updated = store.deactivateBrief(cleanToken, req.authUser.email);
     if (!updated) return res.status(404).json({ success: false, error: 'Brief not found' });
     res.json({ success: true, data: updated });
   });
 
-  app.patch('/api/briefs/:token/edit', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.patch('/api/briefs/:token/edit', requireAuth(['super_admin', 'manager'], 'canViewBriefs'), (req, res) => {
     const cleanToken = sanitizeString(req.params.token);
     const result = store.updateBrief(cleanToken, req.body, req.authUser.email);
     if (result.error) return res.status(400).json({ success: false, error: result.error });
@@ -1335,7 +1388,7 @@ const requireAuth = (allowedRoles = null) => (req, res, next) => {
     res.json({ success: true, message: 'Partner logos marquee updated and published', data: updated });
   });
 
-  app.post('/api/content/upload-photo', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.post('/api/content/upload-photo', requireAuth(['super_admin', 'manager']), async (req, res) => {
     const { dataUrl, filename } = req.body;
     const validation = validateImageUpload(dataUrl, filename, 8 * 1024 * 1024);
     if (!validation.valid) {
@@ -1343,20 +1396,25 @@ const requireAuth = (allowedRoles = null) => (req, res, next) => {
     }
 
     try {
-      const uploadDir = path.join(CLIENT_DIR, 'assets', 'uploads');
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
+      let publicUrl = '';
+      if (cloudinaryService.isConfigured()) {
+        const uploaded = await cloudinaryService.uploadDataUrl(dataUrl, { folder: 'aurora/content' });
+        publicUrl = uploaded.url;
+      } else {
+        const uploadDir = path.join(CLIENT_DIR, 'assets', 'uploads');
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        const filePath = path.join(uploadDir, validation.safeFilename);
+        fs.writeFileSync(filePath, validation.buffer);
+        publicUrl = `/assets/uploads/${validation.safeFilename}`;
       }
 
-      const filePath = path.join(uploadDir, validation.safeFilename);
-      fs.writeFileSync(filePath, validation.buffer);
-
-      const publicUrl = `/assets/uploads/${validation.safeFilename}`;
-      store.logActivity('Content Photo Uploaded', req.authUser.email, { publicUrl, originalName: filename });
+      store.logActivity('Content Photo Uploaded', req.authUser.email, { publicUrl, originalName: filename, storage: cloudinaryService.isConfigured() ? 'cloudinary' : 'local' });
 
       res.status(201).json({ success: true, url: publicUrl });
     } catch (err) {
-      res.status(500).json({ success: false, error: 'Failed to save content photo' });
+      res.status(500).json({ success: false, error: 'Failed to save content photo: ' + err.message });
     }
   });
 

@@ -123,7 +123,7 @@
   <link rel="stylesheet" href="/css/base.css">
   <link rel="stylesheet" href="/css/components.css">
   <link rel="stylesheet" href="/css/layout.css">
-  <link rel="stylesheet" href="/css/screens.css">
+  <link rel="stylesheet" href="/css/screens.css?v=20261127c">
   <link rel="stylesheet" href="/css/rtl.css">
 
   <!-- Google Analytics 4 (GA4) with Consent Management -->
@@ -1344,18 +1344,27 @@
     <section id="screen-portal" class="screen-view" style="display:none;">
       <div class="portal-layout">
         <aside class="portal-sidebar">
-          <div style="margin-bottom:24px;">
+          <div style="margin-bottom:20px;">
             <a href="/" data-link>
               <img src="/assets/aurora/Logo%20Variants/AUR_original-logo(V).png" alt="Aurora Group" class="logo-for-light" style="height:28px; width:auto; max-width:140px; object-fit:contain;">
               <img src="/assets/aurora/Logo%20Variants/AUR_original-logo-colored-dark.png" alt="Aurora Group" class="logo-for-dark" style="height:28px; width:auto; max-width:140px; object-fit:contain;">
             </a>
             <div class="brand-tagline" style="margin-top:6px;">EMPLOYEE PORTAL</div>
+            <div class="portal-theme-row">
+              <label class="switch portal-theme-switch" aria-label="Toggle Light and Dark Mode">
+                <input type="checkbox" class="portal-theme-checkbox" onchange="window.auroraToggleTheme()">
+                <span class="slider"></span>
+              </label>
+              <span class="portal-theme-label">Light Mode</span>
+            </div>
           </div>
-          <ul class="portal-nav-list">
+          <ul class="portal-nav-list" id="portalSidebarNav">
             <li><a class="portal-nav-link active" onclick="window.auroraSwitchPortalTab('profile', this)">👤 My Profile</a></li>
             <li><a class="portal-nav-link" onclick="window.auroraSwitchPortalTab('works', this)">🎬 My Works &amp; Clips</a></li>
-            <li><a class="portal-nav-link" onclick="window.auroraSwitchPortalTab('appearance', this)">🎨 Appearance</a></li>
-            <li id="portalAdminSwitchLink" style="display:none;"><a href="/admin" data-link class="portal-nav-link" style="color:var(--brand-soft-lilac);">⚙️ Switch to Admin View</a></li>
+            <li data-portal-perm="kyc" style="display:none;"><a class="portal-nav-link" onclick="window.auroraSwitchPortalTab('kyc', this)">📋 Client KYC</a></li>
+            <li data-portal-perm="crm" style="display:none;"><a class="portal-nav-link" onclick="window.auroraSwitchPortalTab('crm', this)">📥 CRM Inquiries</a></li>
+            <li data-portal-perm="approve" style="display:none;"><a class="portal-nav-link" onclick="window.auroraSwitchPortalTab('approve', this)">✅ Approve Projects</a></li>
+            <li data-portal-perm="publish" style="display:none;"><a class="portal-nav-link" onclick="window.auroraSwitchPortalTab('publish', this)">🚀 Publish Projects</a></li>
             <li><a href="/" data-link class="portal-nav-link">← Public Website</a></li>
             <li><a href="javascript:void(0)" onclick="window.auroraLogout()" class="portal-nav-link">Sign Out</a></li>
           </ul>
@@ -1476,29 +1485,109 @@
             </div>
           </div>
 
-          <!-- TAB 3: Appearance (Requirement C.3.1: Full RTL/Language Switch) -->
-          <div id="portal-tab-appearance" style="display:none;">
-            <div class="card" style="max-width:620px;">
-              <h3 style="margin-bottom:16px;">Personal Appearance Preferences</h3>
-              <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:24px;">Your chosen theme and language are saved directly to your account profile.</p>
-
-              <div class="form-group">
-                <label class="form-label">Dashboard Theme</label>
-                <div class="segmented-control theme-segmented-control" style="width:fit-content;">
-                  <button type="button" class="segment-btn theme-segment-btn" data-mode="light" onclick="window.auroraSetUserTheme('light')">Light</button>
-                  <button type="button" class="segment-btn theme-segment-btn" data-mode="dark" onclick="window.auroraSetUserTheme('dark')">Dark</button>
-                  <button type="button" class="segment-btn theme-segment-btn" data-mode="system" onclick="window.auroraSetUserTheme('system')">System</button>
-                </div>
+          <!-- TAB 3: Delegated Client KYC (canViewBriefs / canGenerateBriefs) -->
+          <div id="portal-tab-kyc" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+              <div>
+                <h3>Client Discovery KYC</h3>
+                <p style="color:var(--text-muted); font-size:0.9rem;">View onboarding KYCs, inspect client answers, and generate new KYC links.</p>
               </div>
-
-              <div class="form-group" style="margin-top:20px;">
-                <label class="form-label">Interface Language</label>
-                <div class="segmented-control" style="width:fit-content;">
-                  <button type="button" class="segment-btn active" id="userLangEnBtn" onclick="window.auroraSetUserLang('en')">English</button>
-                  <button type="button" class="segment-btn" id="userLangArBtn" onclick="window.auroraSetUserLang('ar')">العربية</button>
-                </div>
+              <div style="display:flex; gap:10px; align-items:center;">
+                <button type="button" id="portalGenerateKycBtn" class="btn btn-teal" onclick="window.auroraOpenGenerateBrief()">+ Generate KYC Link</button>
               </div>
             </div>
+
+            <div class="table-toolbar" style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+              <input type="search" id="portalKycSearchInput" class="form-input" placeholder="Search client name, brand, email, or KYC ID..." style="flex:2; min-width:260px;" oninput="window.auroraFilterPortalKyc()">
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <select id="portalKycStatusFilter" class="form-select" style="width:auto; padding:6px 12px;" onchange="window.auroraFilterPortalKyc()">
+                  <option value="all">All Statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="submitted">Submitted</option>
+                  <option value="expired">Expired</option>
+                  <option value="deactivated">Deactivated</option>
+                </select>
+                <select id="portalKycSortOrder" class="form-select" style="width:auto; padding:6px 12px;" onchange="window.auroraFilterPortalKyc()">
+                  <option value="newest">Newest First</option>
+                  <option value="name">Client Name (A-Z)</option>
+                  <option value="expiry">Expiry Date</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-outline" onclick="window.auroraRefreshBriefs(true)">🔄 Refresh</button>
+              </div>
+            </div>
+
+            <div class="data-table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Client Name</th>
+                    <th>Brand</th>
+                    <th>Status</th>
+                    <th>Expiry Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="portalKycTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB 4: Delegated CRM Inquiries (canViewCRM) -->
+          <div id="portal-tab-crm" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+              <div>
+                <h3>Public Inquiries (CRM)</h3>
+                <p style="color:var(--text-muted); font-size:0.9rem;">Review and update incoming client inquiry statuses and notes.</p>
+              </div>
+            </div>
+
+            <div class="table-toolbar" style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+              <input type="search" id="portalCrmSearchInput" class="form-input" placeholder="Search client, brand, phone, or email..." style="flex:2; min-width:260px;" oninput="window.auroraFilterPortalCRM()">
+              <select id="portalCrmStatusFilter" class="form-select" style="width:auto; padding:6px 12px;" onchange="window.auroraFilterPortalCRM()">
+                <option value="all">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Contacted">Contacted</option>
+                <option value="Meeting Scheduled">Meeting Scheduled</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Ended">Ended</option>
+                <option value="Dead">Dead</option>
+              </select>
+            </div>
+
+            <div class="data-table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th>Brand</th>
+                    <th>Phone</th>
+                    <th>Date</th>
+                    <th>Budget</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="portalInquiriesTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB 5: Delegated Approve Projects (canApproveProjects) -->
+          <div id="portal-tab-approve" style="display:none;">
+            <div style="margin-bottom:20px;">
+              <h3>Approve Projects</h3>
+              <p style="color:var(--text-muted); font-size:0.9rem;">Review submitted projects and approve or reject them for staging.</p>
+            </div>
+            <div id="portalApproveContainer"></div>
+          </div>
+
+          <!-- TAB 6: Delegated Publish Projects (canPublishProjects) -->
+          <div id="portal-tab-publish" style="display:none;">
+            <div style="margin-bottom:20px;">
+              <h3>Publish Projects</h3>
+              <p style="color:var(--text-muted); font-size:0.9rem;">Publish approved projects live to the public website.</p>
+            </div>
+            <div id="portalPublishContainer"></div>
           </div>
         </main>
       </div>
@@ -1510,25 +1599,32 @@
     <section id="screen-admin" class="screen-view" style="display:none;">
       <div class="portal-layout">
         <aside class="portal-sidebar">
-          <div style="margin-bottom:24px;">
+          <div style="margin-bottom:20px;">
             <a href="/" data-link>
               <img src="/assets/aurora/Logo%20Variants/AUR_original-logo(V).png" alt="Aurora Group" class="logo-for-light" style="height:28px; width:auto; max-width:140px; object-fit:contain;">
               <img src="/assets/aurora/Logo%20Variants/AUR_original-logo-colored-dark.png" alt="Aurora Group" class="logo-for-dark" style="height:28px; width:auto; max-width:140px; object-fit:contain;">
             </a>
             <div class="brand-tagline" id="adminRoleTagline" style="margin-top:6px;">CONTROL PANEL</div>
+            <div class="portal-theme-row">
+              <label class="switch portal-theme-switch" aria-label="Toggle Light and Dark Mode">
+                <input type="checkbox" class="portal-theme-checkbox" onchange="window.auroraToggleTheme()">
+                <span class="slider"></span>
+              </label>
+              <span class="portal-theme-label">Light Mode</span>
+            </div>
           </div>
           <ul class="portal-nav-list" id="adminSidebarNav">
-            <li><a class="portal-nav-link active" onclick="window.auroraSwitchAdminSection('briefs', this)">📋 Client Briefs (KYC)</a></li>
-            <li><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('crm', this)">📥 Public Inquiries (CRM)</a></li>
-            <li><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('awaiting', this)">⏳ Projects Awaiting Review</a></li>
-            <li><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('projects', this)">🗂️ Projects Control Panel</a></li>
-            <li><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('invoices', this)">🧾 Quotations &amp; Invoices</a></li>
-            <li class="super-admin-only"><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('users', this)">👥 Staff Users &amp; Permissions</a></li>
-            <li class="super-admin-only"><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('settings', this)">⚙️ Settings &amp; Sheet Sync</a></li>
-            <li><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('marquee', this)">🤝 Partner Logos</a></li>
-            <li class="super-admin-only"><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('content', this)">📝 Edit Website Data</a></li>
-            <li class="super-admin-only"><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('activity', this)">📜 Activity Log</a></li>
-            <li><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('monitoring', this)">📊 Monitoring &amp; GA4</a></li>
+            <li data-admin-sec="briefs"><a class="portal-nav-link active" onclick="window.auroraSwitchAdminSection('briefs', this)">📋 Client Briefs (KYC)</a></li>
+            <li data-admin-sec="crm"><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('crm', this)">📥 Public Inquiries (CRM)</a></li>
+            <li data-admin-sec="awaiting"><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('awaiting', this)">⏳ Projects Awaiting Review</a></li>
+            <li data-admin-sec="projects"><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('projects', this)">🗂️ Projects Control Panel</a></li>
+            <li data-admin-sec="invoices"><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('invoices', this)">🧾 Quotations &amp; Invoices</a></li>
+            <li class="super-admin-only" data-admin-sec="users"><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('users', this)">👥 Staff Users &amp; Permissions</a></li>
+            <li class="super-admin-only" data-admin-sec="settings"><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('settings', this)">⚙️ Settings &amp; Sheet Sync</a></li>
+            <li data-admin-sec="marquee"><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('marquee', this)">🤝 Partner Logos</a></li>
+            <li class="super-admin-only" data-admin-sec="content"><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('content', this)">📝 Edit Website Data</a></li>
+            <li class="super-admin-only" data-admin-sec="activity"><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('activity', this)">📜 Activity Log</a></li>
+            <li data-admin-sec="monitoring"><a class="portal-nav-link" onclick="window.auroraSwitchAdminSection('monitoring', this)">📊 Monitoring &amp; GA4</a></li>
             <li><a href="/" data-link class="portal-nav-link">← Public Website</a></li>
             <li><a href="javascript:void(0)" onclick="window.auroraLogout()" class="portal-nav-link">Sign Out</a></li>
           </ul>
@@ -1539,12 +1635,12 @@
           <div id="admin-sec-briefs">
             <div class="portal-topbar">
               <div>
-                <h2>Client Discovery Briefs (KYC)</h2>
-                <p style="color:var(--text-muted); font-size:0.9rem;">Monitor confidential onboarding briefs, inspect client answers, and generate private invite links.</p>
+                <h2>Client Discovery KYC</h2>
+                <p style="color:var(--text-muted); font-size:0.9rem;">Monitor confidential onboarding KYCs, inspect client answers, and generate private invite links.</p>
               </div>
               <div style="display:flex; gap:12px; align-items:center;">
                 <button type="button" class="btn btn-secondary" onclick="window.auroraOpenGoogleSheet()">📊 Open Google Sheet ↗</button>
-                <button type="button" class="btn btn-teal" onclick="window.auroraOpenGenerateBrief()">+ Generate Brief Link</button>
+                <button type="button" id="adminGenerateBriefBtn" class="btn btn-teal" onclick="window.auroraOpenGenerateBrief()">+ Generate KYC Link</button>
               </div>
             </div>
 
@@ -1744,8 +1840,8 @@
                     <th>Assigned Role</th>
                     <th>Approve Projects</th>
                     <th>Publish Live</th>
-                    <th>View Briefs</th>
-                    <th>Generate Briefs</th>
+                    <th>View KYC</th>
+                    <th>Generate KYC</th>
                     <th>CRM Access</th>
                     <th>Actions</th>
                   </tr>

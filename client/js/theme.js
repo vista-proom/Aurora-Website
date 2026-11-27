@@ -79,6 +79,15 @@ function applyTheme(theme) {
   document.querySelectorAll('.sub-theme-icon').forEach((el) => {
     el.textContent = targetIcon;
   });
+  document.querySelectorAll('.sub-theme-label').forEach((el) => {
+    el.textContent = theme === 'light' ? 'Dark Mode' : 'Light Mode';
+  });
+  document.querySelectorAll('.portal-theme-checkbox').forEach((cb) => {
+    cb.checked = theme === 'dark';
+  });
+  document.querySelectorAll('.portal-theme-label').forEach((el) => {
+    el.textContent = theme === 'dark' ? 'Dark Mode' : 'Light Mode';
+  });
   if (themeText) themeText.textContent = targetLabel;
   if (footerToggle) {
     footerToggle.textContent = theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode';

@@ -56,35 +56,6 @@
     "password": "$2b$12$FbSbyXShFTg8R4hqLdzXlOih3lvDcegCbKOV.TQ8Oe/aphHkeA7Tq"
   },
   {
-    "id": "usr-employee",
-    "email": "omar@aurora.eg",
-    "name": "Omar Hassan",
-    "role": "employee",
-    "title": "Lead Commercial Videographer & Director",
-    "department": "Media Production",
-    "slug": "omar-hassan",
-    "photo": "/assets/Image_error.jpg",
-    "bioEn": "Specializing in dynamic 4K cinema commercials, luxury lighting and Hollywood color grading for leading brands in Egypt and the Gulf.",
-    "bioAr": "متخصص في تصوير الإعلانات السينمائية 4K والإضاءة الدرامية وتلوين هوليوود للعلامات التجارية في مصر والخليج.",
-    "theme": "system",
-    "lang": "en",
-    "permissions": {
-      "canApproveProjects": false,
-      "canPublishProjects": false,
-      "canViewBriefs": false,
-      "canGenerateBriefs": false,
-      "canViewCRM": false,
-      "canEditCRMStatus": false,
-      "canEditSiteSettings": false,
-      "canManageUsers": false,
-      "canViewActivityLog": false,
-      "canViewMonitoring": false,
-      "canToggleServices": false
-    },
-    "portfolioClips": [],
-    "password": "$2b$12$sl/8fmkNZ95r5VwFFcRxcuMcZmwZNV64RugqWWStsVnpxNbnPxp7W"
-  },
-  {
     "id": "usr-1795736995376",
     "email": "ziadbahgat77@gmail.com",
     "password": "$2b$12$5Sla66Sz8GmDiQzg8NdWTeCwpVOdUFvWfuEaVQbHUQNlWJ79TO/qG",
@@ -113,5 +84,35 @@
     },
     "mustChangePassword": false,
     "createdAt": "2026-11-26T23:49:55.376Z"
+  },
+  {
+    "id": "usr-1795786646120",
+    "email": "omar@aurora.eg",
+    "password": "$2b$12$.bRzDJt4noy.WoZnRvV26OHJ61T62r.G6PRwz6BwA8mfnS7VjCjkq",
+    "name": "Omar",
+    "role": "employee",
+    "title": "Video Editing Lead",
+    "department": "Administrative",
+    "slug": "omar",
+    "photo": "/assets/Image_error.jpg",
+    "bioEn": "",
+    "bioAr": "",
+    "theme": "system",
+    "lang": "en",
+    "permissions": {
+      "canApproveProjects": false,
+      "canPublishProjects": false,
+      "canViewBriefs": false,
+      "canGenerateBriefs": false,
+      "canViewCRM": false,
+      "canEditCRMStatus": false,
+      "canEditSiteSettings": false,
+      "canManageUsers": false,
+      "canViewActivityLog": false,
+      "canViewMonitoring": false,
+      "canToggleServices": false
+    },
+    "mustChangePassword": false,
+    "createdAt": "2026-11-27T13:37:26.120Z"
   }
 ]

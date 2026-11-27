@@ -349,6 +349,7 @@ async function onScreenChange(screenId, param) {
       return;
     }
     currentUser = verifiedUser;
+    localStorage.setItem('aurora_current_user', JSON.stringify(currentUser));
     if (verifiedUser.mustChangePassword || verifiedUser.mustResetPassword) {
       openFirstLoginPasswordModal(verifiedUser);
     }
@@ -2137,11 +2138,39 @@ async function loadPortalData() {
     if (counter) counter.textContent = `${bioInput.value.length} / 180 chars`;
   }
 
-  // Admin switch link visibility
-  const adminSwitch = document.getElementById('portalAdminSwitchLink');
-  if (adminSwitch) {
-    adminSwitch.style.display = (currentUser.role === 'super_admin' || currentUser.role === 'manager') ? 'block' : 'none';
+  // Show/hide delegated permission tabs inside Employee Portal
+  const p = currentUser.permissions || {};
+  const permMap = {
+    kyc: !!(p.canViewBriefs || p.canGenerateBriefs),
+    crm: !!p.canViewCRM,
+    approve: !!p.canApproveProjects,
+    publish: !!p.canPublishProjects
+  };
+
+  Object.entries(permMap).forEach(([tabKey, allowed]) => {
+    const li = document.querySelector(`#portalSidebarNav li[data-portal-perm="${tabKey}"]`);
+    if (li) li.style.display = allowed ? 'block' : 'none';
+  });
+
+  // Configure Generate KYC button state (visible on KYC tab, dimmed if canGenerateBriefs is false)
+  const genKycBtn = document.getElementById('portalGenerateKycBtn');
+  if (genKycBtn) {
+    if (p.canGenerateBriefs) {
+      genKycBtn.disabled = false;
+      genKycBtn.style.opacity = '1';
+      genKycBtn.style.cursor = 'pointer';
+      genKycBtn.title = 'Generate a new client KYC link';
+    } else {
+      genKycBtn.disabled = true;
+      genKycBtn.style.opacity = '0.45';
+      genKycBtn.style.cursor = 'not-allowed';
+      genKycBtn.title = 'Generate KYC permission required';
+    }
   }
+
+  // Ensure default Profile tab is shown cleanly on load
+  const profileLink = document.querySelector('#portalSidebarNav .portal-nav-link');
+  switchPortalTab('profile', profileLink);
 
   // Prepopulate industries in dropdowns
   await populateNewWorkIndustries();
@@ -2228,12 +2257,123 @@ async function loadEmployeeWorks() {
 }
 
 export function switchPortalTab(tabId, btn) {
-  document.getElementById('portal-tab-profile').style.display = tabId === 'profile' ? 'block' : 'none';
-  document.getElementById('portal-tab-works').style.display = tabId === 'works' ? 'block' : 'none';
-  document.getElementById('portal-tab-appearance').style.display = tabId === 'appearance' ? 'block' : 'none';
+  const tabs = ['profile', 'works', 'kyc', 'crm', 'approve', 'publish'];
+  tabs.forEach(t => {
+    const el = document.getElementById(`portal-tab-${t}`);
+    if (el) el.style.display = t === tabId ? 'block' : 'none';
+  });
 
-  document.querySelectorAll('.portal-sidebar .portal-nav-link').forEach(link => link.classList.remove('active'));
+  document.querySelectorAll('#portalSidebarNav .portal-nav-link').forEach(link => link.classList.remove('active'));
   if (btn) btn.classList.add('active');
+
+  if (tabId === 'kyc') {
+    loadPortalKyc();
+  } else if (tabId === 'crm') {
+    loadPortalCRM();
+  } else if (tabId === 'approve') {
+    loadPortalApproveProjects();
+  } else if (tabId === 'publish') {
+    loadPortalPublishProjects();
+  }
+}
+
+async function loadPortalKyc() {
+  const tbody = document.getElementById('portalKycTableBody');
+  const p = currentUser?.permissions || {};
+  if (!p.canViewBriefs) {
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:32px; color:var(--text-muted);">View KYC permission is not enabled for your account. Use <strong>+ Generate KYC Link</strong> above to create new client KYCs.</td></tr>`;
+    }
+    return;
+  }
+  await refreshBriefs(false);
+}
+
+async function loadPortalCRM() {
+  await loadAdminCRM();
+}
+
+async function loadPortalApproveProjects() {
+  const container = document.getElementById('portalApproveContainer');
+  if (!container) return;
+
+  try {
+    const res = await api.fetchProjects('awaiting_review');
+    const pendingList = (res.success && res.data ? res.data : []).filter(p => !p.isApproved);
+    if (!pendingList.length) {
+      container.innerHTML = `<p style="color:var(--text-muted);">No projects awaiting approval.</p>`;
+      return;
+    }
+
+    container.innerHTML = pendingList.map(p => {
+      const gallery = p.mediaGallery || [];
+      return `
+      <div class="card" style="margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+          <div style="flex:1; min-width:280px;">
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
+              <span class="badge badge-warning">Pending Approval</span>
+              <span class="badge badge-accent">${escapeHtml(p.industryCategory)}</span>
+            </div>
+            <h3 style="margin-bottom:4px;">${escapeHtml(p.titleEn)}</h3>
+            <p style="color:var(--text-muted); font-size:0.9rem;">Client: <strong>${escapeHtml(p.clientName)}</strong> · Year: ${escapeHtml(p.projectYear)} · Credited: ${(p.creditedStaff || []).map(escapeHtml).join(', ')}</p>
+            <p style="margin:10px 0; font-size:0.95rem; line-height:1.5;">${escapeHtml(p.summaryEn)}</p>
+            ${gallery.length ? `
+              <div style="display:flex; gap:8px; margin-top:12px; overflow-x:auto; padding-bottom:4px;">
+                ${gallery.map(m => `
+                  <img src="${escapeHtml(m.url)}" style="width:72px; height:50px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--border-default); cursor:pointer;" alt="${escapeHtml(m.caption || '')}" onclick="window.auroraOpenLightbox('${escapeHtml(m.url)}', '${escapeHtml(m.caption || p.titleEn)}')" />
+                `).join('')}
+              </div>
+            ` : ''}
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-sm btn-outline" style="color:var(--status-error);" onclick="window.auroraOpenRejectProject('${p.id}')">Reject</button>
+            <button class="btn btn-sm btn-primary" onclick="window.auroraApproveProject('${p.id}')">Approve Project</button>
+          </div>
+        </div>
+      </div>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Error loading portal approve projects:', err);
+  }
+}
+
+async function loadPortalPublishProjects() {
+  const container = document.getElementById('portalPublishContainer');
+  if (!container) return;
+
+  try {
+    const res = await api.fetchProjects('all');
+    const list = (res.success && res.data ? res.data : []).filter(p => p.isApproved);
+    if (!list.length) {
+      container.innerHTML = `<p style="color:var(--text-muted);">No approved projects available to publish yet.</p>`;
+      return;
+    }
+
+    container.innerHTML = list.map(p => `
+      <div class="card" style="margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+          <div style="flex:1; min-width:260px;">
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
+              <span class="badge ${p.isPublished ? 'badge-teal' : 'badge-success'}">${p.isPublished ? 'Live on Website' : 'Approved (Ready to Publish)'}</span>
+              <span class="badge badge-accent">${escapeHtml(p.industryCategory)}</span>
+            </div>
+            <h3 style="margin-bottom:4px;">${escapeHtml(p.titleEn)}</h3>
+            <p style="color:var(--text-muted); font-size:0.9rem;">Client: <strong>${escapeHtml(p.clientName)}</strong> · Year: ${escapeHtml(p.projectYear)}</p>
+          </div>
+          <div>
+            ${!p.isPublished
+              ? `<button class="btn btn-sm btn-primary" onclick="window.auroraPublishProject('${p.id}')">Publish Live</button>`
+              : `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:600;">Published</span>`
+            }
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error('Error loading portal publish projects:', err);
+  }
 }
 
 export function copyMyProfileLink() {
@@ -2937,43 +3077,48 @@ async function loadAdminBriefs() {
   startBriefsAutoPoll();
 }
 
-function renderAdminBriefsTable(briefs) {
-  const tbody = document.getElementById('adminBriefsTableBody');
-  if (!tbody) return;
+function renderAdminBriefsTable(briefs, targetTbodyId = null) {
+  const targets = targetTbodyId
+    ? [document.getElementById(targetTbodyId)].filter(Boolean)
+    : [document.getElementById('adminBriefsTableBody'), document.getElementById('portalKycTableBody')].filter(Boolean);
 
-  if (!briefs.length) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:32px; color:var(--text-muted);">No discovery briefs found.</td></tr>`;
-    return;
-  }
+  if (!targets.length) return;
 
-  tbody.innerHTML = briefs.map(b => {
-    const isSubmitted = b.isSubmitted || b.status === 'submitted';
-    const isDeactivated = b.status === 'deactivated';
-    const canEdit = b.status === 'pending' || b.status === 'deactivated';
+  const html = !briefs.length
+    ? `<tr><td colspan="5" style="text-align:center; padding:32px; color:var(--text-muted);">No KYC records found.</td></tr>`
+    : briefs.map(b => {
+        const isSubmitted = b.isSubmitted || b.status === 'submitted';
+        const isDeactivated = b.status === 'deactivated';
+        const canEdit = b.status === 'pending' || b.status === 'deactivated';
 
-    return `
-      <tr>
-        <td><strong>${b.clientName}</strong></td>
-        <td>${b.brandName || '—'}</td>
-        <td><span class="status-pill status-${b.status}">${b.status}</span></td>
-        <td>${new Date(b.expiryDate).toLocaleDateString()}</td>
-        <td>
-            <!-- Requirement 6.2: Copy Link as icon button -->
-            <button class="btn btn-sm btn-secondary" onclick="window.auroraCopyBriefRowLink('${b.token}')" title="Copy public link" style="padding:4px 8px; font-size:14px;">🔗</button>
-            <!-- Requirement 6.2: Open Answers as icon button when submitted -->
-            ${isSubmitted ? `<button class="btn btn-sm btn-primary" onclick="window.auroraOpenBriefAnswers('${b.token}')" title="Open Answers" style="padding:4px 8px; font-size:14px;">👁️</button>` : ''}
-            <!-- Requirement D.1.3: Edit button for pending and deactivated briefs -->
-            ${canEdit ? `<button class="btn btn-sm btn-outline" onclick="window.auroraOpenEditBriefModal('${b.token}')">Edit</button>` : ''}
-            <!-- Requirement 6.2: Meeting Prep only appears when status is submitted -->
-            ${isSubmitted ? `<button class="btn btn-sm btn-outline" onclick="window.auroraOpenMeetingPrep('${b.token}')">📋 Meeting Prep</button>` : ''}
-            <!-- Requirement 6.2: Extend & Deactivate disappear when status is submitted -->
-            ${!isSubmitted ? `<button class="btn btn-sm btn-secondary" onclick="window.auroraOpenExtendBriefModal('${b.token}')">Extend</button>` : ''}
-            ${!isSubmitted && !isDeactivated ? `<button class="btn btn-sm btn-secondary" style="color:var(--status-error);" onclick="window.auroraDeactivateBrief('${b.token}')">Deactivate</button>` : ''}
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join('');
+        return `
+          <tr>
+            <td><strong>${b.clientName}</strong></td>
+            <td>${b.brandName || '—'}</td>
+            <td><span class="status-pill status-${b.status}">${b.status}</span></td>
+            <td>${new Date(b.expiryDate).toLocaleDateString()}</td>
+            <td>
+              <div>
+                <!-- Requirement 6.2: Copy Link as icon button -->
+                <button class="btn btn-sm btn-secondary" onclick="window.auroraCopyBriefRowLink('${b.token}')" title="Copy public link" style="padding:4px 8px; font-size:14px;">🔗</button>
+                <!-- Requirement 6.2: Open Answers as icon button when submitted -->
+                ${isSubmitted ? `<button class="btn btn-sm btn-primary" onclick="window.auroraOpenBriefAnswers('${b.token}')" title="Open Answers" style="padding:4px 8px; font-size:14px;">👁️</button>` : ''}
+                <!-- Requirement D.1.3: Edit button for pending and deactivated briefs -->
+                ${canEdit ? `<button class="btn btn-sm btn-outline" onclick="window.auroraOpenEditBriefModal('${b.token}')">Edit</button>` : ''}
+                <!-- Requirement 6.2: Meeting Prep only appears when status is submitted -->
+                ${isSubmitted ? `<button class="btn btn-sm btn-outline" onclick="window.auroraOpenMeetingPrep('${b.token}')">📋 Meeting Prep</button>` : ''}
+                <!-- Requirement 6.2: Extend & Deactivate disappear when status is submitted -->
+                ${!isSubmitted ? `<button class="btn btn-sm btn-secondary" onclick="window.auroraOpenExtendBriefModal('${b.token}')">Extend</button>` : ''}
+                ${!isSubmitted && !isDeactivated ? `<button class="btn btn-sm btn-secondary" style="color:var(--status-error);" onclick="window.auroraDeactivateBrief('${b.token}')">Deactivate</button>` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+  targets.forEach(tbody => {
+    tbody.innerHTML = html;
+  });
 }
 
 // Requirement D.1.1: Copy brief URL
@@ -3040,11 +3185,38 @@ export function filterBriefs() {
   } else if (sort === 'expiry') {
     filtered.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
   } else {
-    // newest
     filtered.sort((a, b) => new Date(b.createdAt || b.expiryDate) - new Date(a.createdAt || a.expiryDate));
   }
 
-  renderAdminBriefsTable(filtered);
+  renderAdminBriefsTable(filtered, 'adminBriefsTableBody');
+  filterPortalKyc();
+}
+
+export function filterPortalKyc() {
+  if (currentUser?.role === 'employee' && !currentUser?.permissions?.canViewBriefs) return;
+  const search = (document.getElementById('portalKycSearchInput')?.value || '').toLowerCase().trim();
+  const status = document.getElementById('portalKycStatusFilter')?.value || 'all';
+  const sort = document.getElementById('portalKycSortOrder')?.value || 'newest';
+
+  let filtered = allAdminBriefs.filter(b => {
+    const matchesSearch = !search ||
+      (b.clientName || '').toLowerCase().includes(search) ||
+      (b.brandName || '').toLowerCase().includes(search) ||
+      (b.token || '').toLowerCase().includes(search) ||
+      (b.data?.email || '').toLowerCase().includes(search);
+    const matchesStatus = status === 'all' || b.status === status;
+    return matchesSearch && matchesStatus;
+  });
+
+  if (sort === 'name') {
+    filtered.sort((a, b) => a.clientName.localeCompare(b.clientName));
+  } else if (sort === 'expiry') {
+    filtered.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
+  } else {
+    filtered.sort((a, b) => new Date(b.createdAt || b.expiryDate) - new Date(a.createdAt || a.expiryDate));
+  }
+
+  renderAdminBriefsTable(filtered, 'portalKycTableBody');
 }
 
 export function openGenerateBriefModal() {
@@ -3340,41 +3512,45 @@ async function loadAdminCRM() {
   }
 }
 
-function renderAdminCRMTable(inquiries) {
-  const tbody = document.getElementById('adminInquiriesTableBody');
-  if (!tbody) return;
+function renderAdminCRMTable(inquiries, targetTbodyId = null) {
+  const targets = targetTbodyId
+    ? [document.getElementById(targetTbodyId)].filter(Boolean)
+    : [document.getElementById('adminInquiriesTableBody'), document.getElementById('portalInquiriesTableBody')].filter(Boolean);
 
-  if (!inquiries.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:32px; color:var(--text-muted);">No inquiries received yet.</td></tr>`;
-    return;
-  }
+  if (!targets.length) return;
 
-  tbody.innerHTML = inquiries.map(inq => `
-    <tr>
-      <td style="max-width:200px;">
-        <strong style="display:block; color:var(--text-primary); font-size:0.95rem;">${escapeHtml(inq.fullName)}</strong>
-        ${inq.email ? `<span style="display:block; font-size:0.8rem; color:var(--text-muted); word-break:break-all; margin-top:2px;" dir="ltr">${escapeHtml(inq.email)}</span>` : ''}
-      </td>
-      <td><strong>${escapeHtml(inq.brandName || '—')}</strong></td>
-      <td dir="ltr" style="white-space:nowrap;">${escapeHtml(inq.phone)}</td>
-      <td style="white-space:nowrap;">${new Date(inq.createdAt).toLocaleDateString()}</td>
-      <td style="white-space:nowrap; font-weight:700; color:var(--timeline-accent);">${escapeHtml(inq.budget || '—')}</td>
-      <td>
-        <select class="form-select" style="padding:4px 8px; font-size:0.85rem;" onchange="window.auroraOpenCRMStatusModal('${inq.id}', this.value); this.value = '${inq.status || 'Pending'}';">
-          <option value="Pending" ${inq.status === 'Pending' ? 'selected' : ''}>Pending</option>
-          <option value="Contacted" ${inq.status === 'Contacted' ? 'selected' : ''}>Contacted</option>
-          <option value="Meeting Scheduled" ${inq.status === 'Meeting Scheduled' ? 'selected' : ''}>Meeting Scheduled</option>
-          <option value="In Progress" ${inq.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
-          <option value="Ended" ${inq.status === 'Ended' ? 'selected' : ''}>Ended</option>
-          <option value="Dead" ${inq.status === 'Dead' ? 'selected' : ''}>Dead</option>
-        </select>
-      </td>
-      <td style="white-space:nowrap;">
-        <!-- Requirement D.2.1: Open full CRM details modal showing all fields and Q&A -->
-        <button class="btn btn-sm btn-outline" onclick="window.auroraOpenCRMDetails('${inq.id}')">View Details</button>
-      </td>
-    </tr>
-  `).join('');
+  const html = !inquiries.length
+    ? `<tr><td colspan="7" style="text-align:center; padding:32px; color:var(--text-muted);">No inquiries received yet.</td></tr>`
+    : inquiries.map(inq => `
+        <tr>
+          <td style="max-width:200px;">
+            <strong style="display:block; color:var(--text-primary); font-size:0.95rem;">${escapeHtml(inq.fullName)}</strong>
+            ${inq.email ? `<span style="display:block; font-size:0.8rem; color:var(--text-muted); word-break:break-all; margin-top:2px;" dir="ltr">${escapeHtml(inq.email)}</span>` : ''}
+          </td>
+          <td><strong>${escapeHtml(inq.brandName || '—')}</strong></td>
+          <td dir="ltr" style="white-space:nowrap;">${escapeHtml(inq.phone)}</td>
+          <td style="white-space:nowrap;">${new Date(inq.createdAt).toLocaleDateString()}</td>
+          <td style="white-space:nowrap; font-weight:700; color:var(--timeline-accent);">${escapeHtml(inq.budget || '—')}</td>
+          <td>
+            <select class="form-select" style="padding:4px 8px; font-size:0.85rem;" onchange="window.auroraOpenCRMStatusModal('${inq.id}', this.value); this.value = '${inq.status || 'Pending'}';">
+              <option value="Pending" ${inq.status === 'Pending' ? 'selected' : ''}>Pending</option>
+              <option value="Contacted" ${inq.status === 'Contacted' ? 'selected' : ''}>Contacted</option>
+              <option value="Meeting Scheduled" ${inq.status === 'Meeting Scheduled' ? 'selected' : ''}>Meeting Scheduled</option>
+              <option value="In Progress" ${inq.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+              <option value="Ended" ${inq.status === 'Ended' ? 'selected' : ''}>Ended</option>
+              <option value="Dead" ${inq.status === 'Dead' ? 'selected' : ''}>Dead</option>
+            </select>
+          </td>
+          <td style="white-space:nowrap;">
+            <!-- Requirement D.2.1: Open full CRM details modal showing all fields and Q&A -->
+            <button class="btn btn-sm btn-outline" onclick="window.auroraOpenCRMDetails('${inq.id}')">View Details</button>
+          </td>
+        </tr>
+      `).join('');
+
+  targets.forEach(tbody => {
+    tbody.innerHTML = html;
+  });
 }
 
 // Requirement D.2.1: Full CRM Details Modal with Status & Notes History
@@ -3447,12 +3623,25 @@ export function filterCRM() {
   const status = document.getElementById('crmStatusFilter')?.value || 'all';
 
   const filtered = allAdminInquiries.filter(inq => {
-    const matchesSearch = inq.fullName.toLowerCase().includes(search) || inq.brandName.toLowerCase().includes(search);
+    const matchesSearch = (inq.fullName || '').toLowerCase().includes(search) || (inq.brandName || '').toLowerCase().includes(search);
     const matchesStatus = status === 'all' || inq.status === status;
     return matchesSearch && matchesStatus;
   });
 
-  renderAdminCRMTable(filtered);
+  renderAdminCRMTable(filtered, 'adminInquiriesTableBody');
+}
+
+export function filterPortalCRM() {
+  const search = (document.getElementById('portalCrmSearchInput')?.value || '').toLowerCase();
+  const status = document.getElementById('portalCrmStatusFilter')?.value || 'all';
+
+  const filtered = allAdminInquiries.filter(inq => {
+    const matchesSearch = (inq.fullName || '').toLowerCase().includes(search) || (inq.brandName || '').toLowerCase().includes(search) || (inq.phone || '').toLowerCase().includes(search) || (inq.email || '').toLowerCase().includes(search);
+    const matchesStatus = status === 'all' || inq.status === status;
+    return matchesSearch && matchesStatus;
+  });
+
+  renderAdminCRMTable(filtered, 'portalInquiriesTableBody');
 }
 
 export function openCRMStatusModal(id, targetStatus) {
@@ -4024,6 +4213,8 @@ export async function submitRejectProject(e) {
       closeAllModalsAndDrawers();
       loadAdminAwaitingReview();
       loadAdminProjectsControl();
+      loadPortalApproveProjects();
+      loadPortalPublishProjects();
     } else {
       alert(res.error || 'Failed to reject project.');
     }
@@ -4038,6 +4229,8 @@ export async function approveProject(id) {
     alert('Project approved (staged)! Ready to be published live.');
     loadAdminAwaitingReview();
     loadAdminProjectsControl();
+    loadPortalApproveProjects();
+    loadPortalPublishProjects();
   }
 }
 
@@ -4047,6 +4240,8 @@ export async function publishProject(id) {
     alert('Project published live to the public website!');
     loadAdminAwaitingReview();
     loadAdminProjectsControl();
+    loadPortalApproveProjects();
+    loadPortalPublishProjects();
     loadProjects();
   }
 }
@@ -6193,7 +6388,10 @@ window.auroraLogout = logout;
 window.auroraSwitchAdminSection = switchAdminSection;
 window.auroraOpenGoogleSheet = openGoogleSheet;
 window.auroraFilterBriefs = filterBriefs;
+window.auroraFilterPortalKyc = filterPortalKyc;
+window.auroraRefreshBriefs = refreshBriefs;
 window.auroraFilterCRM = filterCRM;
+window.auroraFilterPortalCRM = filterPortalCRM;
 window.auroraUpdateInquiryStatus = submitCRMStatusUpdate;
 window.auroraUpdateUserRole = updateUserRole;
 window.auroraTogglePerm = togglePerm;

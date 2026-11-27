@@ -12,11 +12,19 @@
     "industry": "Vegetables",
     "budget": "100,000+ EGP",
     "message": "اعمل ١٠٠ مليون جنيه",
-    "status": "Meeting Scheduled",
+    "status": "In Progress",
     "createdAt": "2026-10-27T17:40:43.972Z",
-    "updatedAt": "2026-11-08T22:06:35.469Z",
-    "latestNote": "Called client via WhatsApp. Scheduled strategic discovery call for Thursday 4 PM at Sharks Space.",
+    "updatedAt": "2026-11-27T14:04:49.514Z",
+    "latestNote": "nothing",
     "statusHistory": [
+      {
+        "id": "sh-1795788289514",
+        "fromStatus": "Meeting Scheduled",
+        "toStatus": "In Progress",
+        "note": "nothing",
+        "updatedBy": "omar@aurora.eg",
+        "updatedAt": "2026-11-27T14:04:49.514Z"
+      },
       {
         "id": "sh-1794175595469",
         "fromStatus": "Pending",

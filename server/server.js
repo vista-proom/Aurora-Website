@@ -1291,7 +1291,10 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     }
 
     const brief = store.createBrief(clientName, brandName, daysValid, req.authUser.email);
-    await firebaseDbService.syncBriefs(store.getBriefs());
+    await Promise.allSettled([
+      firebaseDbService.syncBriefs(store.getBriefs()),
+      sheetsService.appendBrief(brief)
+    ]);
     res.status(201).json({ success: true, data: brief });
   });
 

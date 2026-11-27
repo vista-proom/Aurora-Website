@@ -155,7 +155,7 @@ export class GoogleSheetsService {
       return { success: true, queued: true, message: 'Inquiry saved locally and queued for Google Sheet sync' };
     }
 
-    return await this.syncRow(queueItem.id, 'inquiry', 'Contact Inquiries', row, config, inquiry);
+    return await this.syncRow(queueItem.id, 'inquiry', 'CRM', row, config, inquiry);
   }
 
   /**
@@ -164,7 +164,7 @@ export class GoogleSheetsService {
   async appendBrief(brief) {
     const d = brief.data || {};
     const row = [
-      new Date().toISOString(),
+      brief.submittedAt || brief.createdAt || new Date().toISOString(),
       brief.token || '',
       d.fullName || brief.clientName || '',
       d.role || '',
@@ -183,10 +183,10 @@ export class GoogleSheetsService {
       d.driveLink || '',
       d.competitors || d.briefTasteLikes || '',
       d.visualTasteDislikes || '',
-      d.meetVenue || 'Sharks Office Space',
+      d.meetVenue || (brief.isSubmitted ? 'Sharks Office Space' : ''),
       d.meetingDatePreference || '',
       d.meetingAttendees || '',
-      brief.status || 'submitted'
+      brief.status || (brief.isSubmitted ? 'submitted' : 'pending')
     ];
 
     const queueItem = this.addToQueue('brief', brief, row);
@@ -197,7 +197,7 @@ export class GoogleSheetsService {
       return { success: true, queued: true, message: 'Brief saved locally and queued for Google Sheet sync' };
     }
 
-    return await this.syncRow(queueItem.id, 'brief', 'Briefs', row, config, brief);
+    return await this.syncRow(queueItem.id, 'brief', 'KYC', row, config, brief);
   }
 
   /**
@@ -278,7 +278,7 @@ export class GoogleSheetsService {
     const errors = [];
 
     for (const item of pending) {
-      const sheetName = item.type === 'inquiry' ? 'Contact Inquiries' : 'Briefs';
+      const sheetName = item.type === 'inquiry' ? 'CRM' : 'KYC';
       const res = await this.syncRow(item.id, item.type, sheetName, item.row, config, item.record);
       if (res.success) {
         syncedCount++;

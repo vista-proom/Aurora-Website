@@ -1,5 +1,12 @@
 [
   {
+    "id": "log-1795791113410",
+    "action": "User Logout",
+    "user": "admin@aurora.eg",
+    "timestamp": "2026-11-27T14:51:53.410Z",
+    "details": "{}"
+  },
+  {
     "id": "log-1795789807316",
     "action": "Project Published Live",
     "user": "admin@aurora.eg",
@@ -1391,12 +1398,5 @@
     "user": "mohamedeldkhmesy5246@gmail.com",
     "timestamp": "2026-10-27T15:17:30.601Z",
     "details": "{\"projectId\":\"proj-1793114130448\",\"reason\":\"hgkigkig\"}"
-  },
-  {
-    "id": "log-1793114176302",
-    "action": "Project Rejected",
-    "user": "mohamedeldkhmesy5246@gmail.com",
-    "timestamp": "2026-10-27T15:16:16.302Z",
-    "details": "{\"projectId\":\"proj-1793114130448\",\"reason\":\"fgfgfg\"}"
   }
 ]

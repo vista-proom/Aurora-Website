@@ -1570,23 +1570,27 @@ Aurora Group provides creative strategy, cinema 4K commercial production, corpor
     });
   });
 
-  app.listen(PORT, () => {
-    console.log(`\n======================================================`);
-    console.log(`  AURORA GROUP PLATFORM v3 (HARDENED) RUNNING AT:`);
-    console.log(`  http://localhost:${PORT}`);
-    console.log(`  API Base: http://localhost:${PORT}/api`);
-    console.log(`  Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`  RBAC: Active | HttpOnly Sessions: Enabled | CSP: Active`);
-    console.log(`======================================================\n`);
+  if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+      console.log(`\n======================================================`);
+      console.log(`  AURORA GROUP PLATFORM v3 (HARDENED) RUNNING AT:`);
+      console.log(`  http://localhost:${PORT}`);
+      console.log(`  API Base: http://localhost:${PORT}/api`);
+      console.log(`  Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`  RBAC: Active | HttpOnly Sessions: Enabled | CSP: Active`);
+      console.log(`======================================================\n`);
 
-    // Automatically reconcile Firebase Auth & Realtime Database on startup so no deleted users remain in Firebase
-    setTimeout(async () => {
-      try {
-        const currentUsers = store.getUsers();
-        await firebaseAuthService.reconcileAndSyncAllUsers(currentUsers, false);
-        await firebaseDbService.syncUsers(currentUsers);
-      } catch (e) {
-        console.warn('[Startup Firebase Reconcile Warning]:', e.message);
-      }
-    }, 1500);
-  });
+      // Automatically reconcile Firebase Auth & Realtime Database on startup so no deleted users remain in Firebase
+      setTimeout(async () => {
+        try {
+          const currentUsers = store.getUsers();
+          await firebaseAuthService.reconcileAndSyncAllUsers(currentUsers, false);
+          await firebaseDbService.syncUsers(currentUsers);
+        } catch (e) {
+          console.warn('[Startup Firebase Reconcile Warning]:', e.message);
+        }
+      }, 1500);
+    });
+  }
+
+  export default app;

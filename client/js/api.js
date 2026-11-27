@@ -4,7 +4,9 @@
  * Zero Credentials in LocalStorage, Automatic CSRF/CORS Handling.
  */
 
-const BASE_URL = '/api';
+const isLocalHost = typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+const BASE_URL = isLocalHost ? '/api' : 'https://aurora-website-five.vercel.app/api';
 
 export function handleUnauthorizedSession(notice = 'timeout') {
   console.warn('[Security Guard] Active session revoked or unauthorized. Resetting session and reloading login.');

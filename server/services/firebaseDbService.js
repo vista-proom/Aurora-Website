@@ -27,13 +27,24 @@ class FirebaseDbService {
 
   async init() {
     try {
-      const keyPath = path.join(__dirname, '../serviceAccountKey.json');
-      if (!fs.existsSync(keyPath)) {
-        console.warn('[Firebase DB] serviceAccountKey.json not found. Operating in local mode.');
-        return;
+      let serviceAccount = null;
+      if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+        try {
+          serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+          console.log('[Firebase DB] Loaded Service Account from FIREBASE_SERVICE_ACCOUNT_JSON env var.');
+        } catch (e) {
+          console.warn('[Firebase DB] Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON:', e.message);
+        }
       }
 
-      const serviceAccount = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
+      if (!serviceAccount) {
+        const keyPath = path.join(__dirname, '../serviceAccountKey.json');
+        if (!fs.existsSync(keyPath)) {
+          console.warn('[Firebase DB] serviceAccountKey.json not found. Operating in local mode.');
+          return;
+        }
+        serviceAccount = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
+      }
 
       // Check for existing app or initialize dedicated DB app
       const appName = 'aurora-firebase-db';

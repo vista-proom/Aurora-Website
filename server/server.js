@@ -916,21 +916,87 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
   });
 
   // -----------------------------------------------------------------------------
-  // 7. PROJECTS & PORTFOLIO (RBAC, Upload Sanitization & RLS)
+  // 7. PROJECTS & PORTFOLIO (RBAC, Upload Sanitization, Cloudinary & Cloud Sync)
   // -----------------------------------------------------------------------------
-  app.get('/api/projects', (req, res) => {
+  let cloudProjectsHydrated = false;
+  async function ensureProjectsHydrated() {
+    if (cloudProjectsHydrated && !process.env.VERCEL) return;
+    try {
+      const cloudProjects = await firebaseDbService.fetchProjects();
+      if (cloudProjects && cloudProjects.length > 0) {
+        store.replaceProjects(cloudProjects);
+      }
+      cloudProjectsHydrated = true;
+    } catch (e) {
+      console.warn('[Projects Cloud Hydrate Warning]:', e.message);
+    }
+  }
+
+  async function uploadProjectMediaToCloudinary(payload) {
+    if (!cloudinaryService.isConfigured() || !payload) return payload;
+    const out = { ...payload };
+    const originalHero = typeof out.heroImage === 'string' ? out.heroImage : '';
+    let matchedHeroUrl = '';
+
+    if (Array.isArray(out.mediaGallery)) {
+      const processed = [];
+      for (const item of out.mediaGallery) {
+        if (item && typeof item === 'object') {
+          const rawSrc = item.dataUrl || item.url || '';
+          if (typeof rawSrc === 'string' && rawSrc.startsWith('data:image/')) {
+            const uploaded = await cloudinaryService.uploadDataUrl(rawSrc, { folder: 'aurora/projects' });
+            if (originalHero && rawSrc === originalHero) {
+              matchedHeroUrl = uploaded.url;
+            }
+            const nextItem = { ...item, url: uploaded.url, cloudinaryId: uploaded.publicId };
+            delete nextItem.dataUrl;
+            processed.push(nextItem);
+          } else {
+            processed.push(item);
+          }
+        } else {
+          processed.push(item);
+        }
+      }
+      out.mediaGallery = processed;
+    }
+
+    if (Array.isArray(out.photos)) {
+      out.photos = await cloudinaryService.processProjectPhotos(out.photos, 'aurora/projects');
+    }
+    if (Array.isArray(out.gallery)) {
+      out.gallery = await cloudinaryService.processProjectPhotos(out.gallery, 'aurora/projects');
+    }
+    if (matchedHeroUrl) {
+      out.heroImage = matchedHeroUrl;
+    } else if (typeof out.heroImage === 'string' && out.heroImage.startsWith('data:image/')) {
+      const uploadedHero = await cloudinaryService.uploadDataUrl(out.heroImage, { folder: 'aurora/projects' });
+      out.heroImage = uploadedHero.url;
+    }
+    if (typeof out.heroPhoto === 'string' && out.heroPhoto.startsWith('data:image/')) {
+      const uploadedHero = await cloudinaryService.uploadDataUrl(out.heroPhoto, { folder: 'aurora/projects' });
+      out.heroPhoto = uploadedHero.url;
+    }
+
+    return out;
+  }
+
+  app.get('/api/projects', async (req, res) => {
+    await ensureProjectsHydrated();
     const status = req.query.status || 'published';
     const projects = store.getProjects(status);
     res.json({ success: true, count: projects.length, data: projects });
   });
 
-  app.get('/api/projects/employee/:name', (req, res) => {
+  app.get('/api/projects/employee/:name', async (req, res) => {
+    await ensureProjectsHydrated();
     const cleanName = sanitizeString(req.params.name);
     const projects = store.getProjectsForEmployee(cleanName);
     res.json({ success: true, count: projects.length, data: projects });
   });
 
-  app.get('/api/projects/:slug', (req, res) => {
+  app.get('/api/projects/:slug', async (req, res) => {
+    await ensureProjectsHydrated();
     const cleanSlug = sanitizeString(req.params.slug);
     const project = store.getProjectBySlug(cleanSlug);
     if (!project) {
@@ -942,23 +1008,12 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
   // Authenticated Project Upload
   app.post('/api/projects', requireAuth(), async (req, res) => {
     try {
+      await ensureProjectsHydrated();
       const authorEmail = req.authUser.email;
-      const body = { ...req.body };
-
-      if (cloudinaryService.isConfigured()) {
-        if (Array.isArray(body.photos)) {
-          body.photos = await cloudinaryService.processProjectPhotos(body.photos, 'aurora/projects');
-        }
-        if (Array.isArray(body.gallery)) {
-          body.gallery = await cloudinaryService.processProjectPhotos(body.gallery, 'aurora/projects');
-        }
-        if (typeof body.heroPhoto === 'string' && body.heroPhoto.startsWith('data:image/')) {
-          const uploadedHero = await cloudinaryService.uploadDataUrl(body.heroPhoto, { folder: 'aurora/projects' });
-          body.heroPhoto = uploadedHero.url;
-        }
-      }
+      const body = await uploadProjectMediaToCloudinary(req.body);
 
       const newProject = store.addProject(body, authorEmail);
+      await firebaseDbService.syncProjects(store.getProjects('all'));
       emailService.sendProjectUploadedAlert(newProject, authorEmail).catch(() => { });
       res.status(201).json({ success: true, message: 'Project submitted for manager review', data: newProject });
     } catch (err) {
@@ -966,31 +1021,29 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     }
   });
 
-  app.patch('/api/projects/:id/approve', requireAuth(['super_admin', 'manager'], 'canApproveProjects'), (req, res) => {
+  app.patch('/api/projects/:id/approve', requireAuth(['super_admin', 'manager'], 'canApproveProjects'), async (req, res) => {
+    await ensureProjectsHydrated();
     const updated = store.approveProject(req.params.id, req.authUser.email);
     if (!updated) return res.status(404).json({ success: false, error: 'Project not found' });
+    await firebaseDbService.syncProjects(store.getProjects('all'));
     res.json({ success: true, data: updated });
   });
 
-  app.patch('/api/projects/:id/publish', requireAuth(['super_admin', 'manager'], 'canPublishProjects'), (req, res) => {
+  app.patch('/api/projects/:id/publish', requireAuth(['super_admin', 'manager'], 'canPublishProjects'), async (req, res) => {
+    await ensureProjectsHydrated();
     const updated = store.publishProject(req.params.id, req.authUser.email);
     if (!updated) return res.status(404).json({ success: false, error: 'Project not found' });
+    await firebaseDbService.syncProjects(store.getProjects('all'));
     res.json({ success: true, data: updated });
   });
 
   app.patch('/api/projects/:id', requireAuth(['super_admin', 'manager']), async (req, res) => {
     try {
-      const updates = { ...req.body };
-      if (cloudinaryService.isConfigured()) {
-        if (Array.isArray(updates.photos)) {
-          updates.photos = await cloudinaryService.processProjectPhotos(updates.photos, 'aurora/projects');
-        }
-        if (Array.isArray(updates.gallery)) {
-          updates.gallery = await cloudinaryService.processProjectPhotos(updates.gallery, 'aurora/projects');
-        }
-      }
+      await ensureProjectsHydrated();
+      const updates = await uploadProjectMediaToCloudinary(req.body);
       const updated = store.updateProject(req.params.id, updates, req.authUser.email);
       if (!updated) return res.status(404).json({ success: false, error: 'Project not found' });
+      await firebaseDbService.syncProjects(store.getProjects('all'));
       res.json({ success: true, data: updated });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
@@ -999,33 +1052,31 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
 
   app.put('/api/projects/:id', requireAuth(['super_admin', 'manager']), async (req, res) => {
     try {
-      const updates = { ...req.body };
-      if (cloudinaryService.isConfigured()) {
-        if (Array.isArray(updates.photos)) {
-          updates.photos = await cloudinaryService.processProjectPhotos(updates.photos, 'aurora/projects');
-        }
-        if (Array.isArray(updates.gallery)) {
-          updates.gallery = await cloudinaryService.processProjectPhotos(updates.gallery, 'aurora/projects');
-        }
-      }
+      await ensureProjectsHydrated();
+      const updates = await uploadProjectMediaToCloudinary(req.body);
       const updated = store.updateProject(req.params.id, updates, req.authUser.email);
       if (!updated) return res.status(404).json({ success: false, error: 'Project not found' });
+      await firebaseDbService.syncProjects(store.getProjects('all'));
       res.json({ success: true, message: 'Project updated successfully', data: updated });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
     }
   });
 
-  app.patch('/api/projects/:id/reject', requireAuth(['super_admin', 'manager'], 'canApproveProjects'), (req, res) => {
+  app.patch('/api/projects/:id/reject', requireAuth(['super_admin', 'manager'], 'canApproveProjects'), async (req, res) => {
+    await ensureProjectsHydrated();
     const reason = sanitizeString(req.body.reason || 'Requirements not met');
     const updated = store.rejectProject(req.params.id, reason, req.authUser.email);
     if (!updated) return res.status(404).json({ success: false, error: 'Project not found' });
+    await firebaseDbService.syncProjects(store.getProjects('all'));
     res.json({ success: true, message: 'Project rejected', data: updated });
   });
 
-  app.patch('/api/projects/:id/withdraw', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.patch('/api/projects/:id/withdraw', requireAuth(['super_admin', 'manager']), async (req, res) => {
+    await ensureProjectsHydrated();
     const updated = store.withdrawProject(req.params.id, req.authUser.email);
     if (!updated) return res.status(404).json({ success: false, error: 'Project not found' });
+    await firebaseDbService.syncProjects(store.getProjects('all'));
     res.json({ success: true, message: 'Project withdrawn to draft', data: updated });
   });
 
@@ -1034,10 +1085,12 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.status(201).json({ success: true, message: 'Update request submitted to manager', data: request });
   });
 
-  app.delete('/api/projects/:id/portfolio', requireAuth(), (req, res) => {
+  app.delete('/api/projects/:id/portfolio', requireAuth(), async (req, res) => {
+    await ensureProjectsHydrated();
     const employeeName = req.authUser.role === 'super_admin' ? (req.query.employeeName || req.authUser.name) : req.authUser.name;
     const updated = store.removeProjectFromEmployeePortfolio(req.params.id, employeeName, req.authUser.email);
     if (!updated) return res.status(404).json({ success: false, error: 'Project not found' });
+    await firebaseDbService.syncProjects(store.getProjects('all'));
     res.json({ success: true, message: 'Project removed from your portfolio', data: updated });
   });
 

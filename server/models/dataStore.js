@@ -743,6 +743,12 @@ class DataStoreV2 {
     return list.filter(p => p.status === status);
   }
 
+  replaceProjects(projectsList) {
+    if (Array.isArray(projectsList) && projectsList.length > 0) {
+      this.write(this.projectsFile, projectsList);
+    }
+  }
+
   getProjectBySlug(slug) {
     const list = this.read(this.projectsFile);
     return list.find(p => p.slug === slug);

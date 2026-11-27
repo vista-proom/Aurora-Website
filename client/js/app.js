@@ -4207,10 +4207,12 @@ export async function submitRejectProject(e) {
     if (res.success) {
       alert('Project review rejected and feedback recorded.');
       closeAllModalsAndDrawers();
-      loadAdminAwaitingReview();
-      loadAdminProjectsControl();
-      loadPortalApproveProjects();
-      loadPortalPublishProjects();
+      await Promise.allSettled([
+        loadAdminAwaitingReview(),
+        loadAdminProjectsControl(),
+        loadPortalApproveProjects(),
+        loadPortalPublishProjects()
+      ]);
     } else {
       alert(res.error || 'Failed to reject project.');
     }
@@ -4222,23 +4224,27 @@ export async function submitRejectProject(e) {
 export async function approveProject(id) {
   const res = await api.approveProject(id);
   if (res.success) {
-    alert('Project approved (staged)! Ready to be published live.');
-    loadAdminAwaitingReview();
-    loadAdminProjectsControl();
-    loadPortalApproveProjects();
-    loadPortalPublishProjects();
+    showToastNotification('Project approved (staged)! Ready to be published live.', 'success');
+    await Promise.allSettled([
+      loadAdminAwaitingReview(),
+      loadAdminProjectsControl(),
+      loadPortalApproveProjects(),
+      loadPortalPublishProjects()
+    ]);
   }
 }
 
 export async function publishProject(id) {
   const res = await api.publishProject(id);
   if (res.success) {
-    alert('Project published live to the public website!');
-    loadAdminAwaitingReview();
-    loadAdminProjectsControl();
-    loadPortalApproveProjects();
-    loadPortalPublishProjects();
-    loadProjects();
+    showToastNotification('Project published live to the public website!', 'success');
+    await Promise.allSettled([
+      loadAdminAwaitingReview(),
+      loadAdminProjectsControl(),
+      loadPortalApproveProjects(),
+      loadPortalPublishProjects(),
+      loadProjects()
+    ]);
   }
 }
 

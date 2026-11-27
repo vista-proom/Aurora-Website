@@ -83,11 +83,31 @@ class FirebaseDbService {
   // ---------------------------------------------------------------------------
 
   async syncProjects(projects) {
+    if (!this.isConnected || !this.db) {
+      await this.init();
+    }
     if (!this.isConnected || !this.db) return;
     try {
       await this.db.ref('projects').set(projects);
     } catch (e) {
       console.warn('[Firebase DB Sync Projects Error]:', e.message);
+    }
+  }
+
+  async fetchProjects() {
+    if (!this.isConnected || !this.db) {
+      await this.init();
+    }
+    if (!this.isConnected || !this.db) return null;
+    try {
+      const snap = await this.db.ref('projects').once('value');
+      const val = snap.val();
+      if (!val) return null;
+      const arr = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
+      return arr.length ? arr : null;
+    } catch (e) {
+      console.warn('[Firebase DB Fetch Projects Error]:', e.message);
+      return null;
     }
   }
 

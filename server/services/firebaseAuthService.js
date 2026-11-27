@@ -30,6 +30,18 @@ class FirebaseAuthService {
   async init(forceReinit = false) {
     const settings = store.getSettings() || {};
 
+    let serviceAccount = null;
+
+    // 0. Check FIREBASE_SERVICE_ACCOUNT_JSON environment variable (for Render/Railway cloud hosting)
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+      try {
+        serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+        console.log('[Firebase Auth] Loaded Service Account from FIREBASE_SERVICE_ACCOUNT_JSON env var.');
+      } catch (e) {
+        console.warn('[Firebase Auth] Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON env var:', e.message);
+      }
+    }
+
     // 1. Look for serviceAccountKey.json file
     const possibleKeyFiles = [
       path.join(__dirname, '../serviceAccountKey.json'),
@@ -38,15 +50,16 @@ class FirebaseAuthService {
       path.join(process.cwd(), 'serviceAccountKey.json')
     ];
 
-    let serviceAccount = null;
-    for (const f of possibleKeyFiles) {
-      if (fs.existsSync(f)) {
-        try {
-          serviceAccount = JSON.parse(fs.readFileSync(f, 'utf8'));
-          console.log(`[Firebase Auth] Found Service Account file at: ${f}`);
-          break;
-        } catch (e) {
-          console.warn('[Firebase Auth] Failed to parse service account JSON:', e.message);
+    if (!serviceAccount) {
+      for (const f of possibleKeyFiles) {
+        if (fs.existsSync(f)) {
+          try {
+            serviceAccount = JSON.parse(fs.readFileSync(f, 'utf8'));
+            console.log(`[Firebase Auth] Found Service Account file at: ${f}`);
+            break;
+          } catch (e) {
+            console.warn('[Firebase Auth] Failed to parse service account JSON:', e.message);
+          }
         }
       }
     }

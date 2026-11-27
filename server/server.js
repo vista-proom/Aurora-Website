@@ -136,7 +136,7 @@ app.use(helmet({
 // CORS Configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim())
-  : ['http://localhost:3000', 'http://127.0.0.1:3000', 'https://auroragroup.eg'];
+  : ['http://localhost:3000', 'http://127.0.0.1:3000', 'https://aurora-eg.ziadbahgat.me', 'https://auroragroup.eg'];
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -291,7 +291,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.cookie('aurora_session', sessionToken, {
       httpOnly: true,
       secure: isHttps,
-      sameSite: 'lax',
+      sameSite: isHttps ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
 

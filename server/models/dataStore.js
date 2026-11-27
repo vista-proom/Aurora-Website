@@ -11,10 +11,24 @@ import { hashPassword, isPasswordHashed, sanitizeNoSql } from '../utils/security
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DATA_DIR = path.join(__dirname, '../data');
+const SEED_DATA_DIR = path.join(__dirname, '../data');
+const DATA_DIR = process.env.VERCEL ? '/tmp/aurora_data' : SEED_DATA_DIR;
 
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+try {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  // On Vercel serverless cold starts, seed writable /tmp/aurora_data from bundled server/data
+  if (process.env.VERCEL && fs.existsSync(SEED_DATA_DIR)) {
+    for (const fname of fs.readdirSync(SEED_DATA_DIR)) {
+      const dest = path.join(DATA_DIR, fname);
+      if (!fs.existsSync(dest)) {
+        fs.copyFileSync(path.join(SEED_DATA_DIR, fname), dest);
+      }
+    }
+  }
+} catch (e) {
+  console.warn('[DataStore] Directory setup warning:', e.message);
 }
 
 // -----------------------------------------------------------------------------
@@ -381,7 +395,11 @@ class DataStoreV2 {
   }
 
   write(file, data) {
-    fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
+    try {
+      fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
+    } catch (err) {
+      console.warn('[DataStore] Write skipped/failed:', err.message);
+    }
   }
 
   logActivity(action, user, details) {

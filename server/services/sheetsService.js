@@ -15,7 +15,9 @@ import { store } from '../models/dataStore.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const QUEUE_FILE = path.join(__dirname, '../data/sheet_sync_queue.json');
+const QUEUE_FILE = process.env.VERCEL
+  ? '/tmp/aurora_data/sheet_sync_queue.json'
+  : path.join(__dirname, '../data/sheet_sync_queue.json');
 
 export class GoogleSheetsService {
   constructor() {
@@ -23,8 +25,16 @@ export class GoogleSheetsService {
   }
 
   ensureQueueFile() {
-    if (!fs.existsSync(QUEUE_FILE)) {
-      fs.writeFileSync(QUEUE_FILE, JSON.stringify([], null, 2), 'utf8');
+    try {
+      const dir = path.dirname(QUEUE_FILE);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      if (!fs.existsSync(QUEUE_FILE)) {
+        fs.writeFileSync(QUEUE_FILE, JSON.stringify([], null, 2), 'utf8');
+      }
+    } catch (err) {
+      console.warn('[GoogleSheets] Queue file init warning:', err.message);
     }
   }
 

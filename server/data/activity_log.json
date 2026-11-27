@@ -1,5 +1,61 @@
 [
   {
+    "id": "log-1795789807316",
+    "action": "Project Published Live",
+    "user": "admin@aurora.eg",
+    "timestamp": "2026-11-27T14:30:07.316Z",
+    "details": "{\"projectId\":\"proj-1795789795772\"}"
+  },
+  {
+    "id": "log-1795789801111",
+    "action": "Project Approved (Staged)",
+    "user": "admin@aurora.eg",
+    "timestamp": "2026-11-27T14:30:01.111Z",
+    "details": "{\"projectId\":\"proj-1795789795772\"}"
+  },
+  {
+    "id": "log-1795789795832",
+    "action": "Project Uploaded",
+    "user": "admin@aurora.eg",
+    "timestamp": "2026-11-27T14:29:55.832Z",
+    "details": "{\"projectId\":\"proj-1795789795772\",\"title\":\"Sharks - Office Workspace\"}"
+  },
+  {
+    "id": "log-1795789500731",
+    "action": "New Industry Added",
+    "user": "admin@aurora.eg",
+    "timestamp": "2026-11-27T14:25:00.731Z",
+    "details": "{\"industry\":\"Workspace\"}"
+  },
+  {
+    "id": "log-1795789035347",
+    "action": "User Login (Verified)",
+    "user": "admin@aurora.eg",
+    "timestamp": "2026-11-27T14:17:15.347Z",
+    "details": "{\"role\":\"super_admin\"}"
+  },
+  {
+    "id": "log-1795789012359",
+    "action": "User Logout",
+    "user": "omar@aurora.eg",
+    "timestamp": "2026-11-27T14:16:52.359Z",
+    "details": "{}"
+  },
+  {
+    "id": "log-1795788830250",
+    "action": "Avatar Uploaded",
+    "user": "omar@aurora.eg",
+    "timestamp": "2026-11-27T14:13:50.250Z",
+    "details": "{\"publicUrl\":\"https://res.cloudinary.com/aurora-eg/image/upload/v1795788828/aurora/avatars/g29gb7oz0qnxg7tjgqrc.jpg\",\"storage\":\"cloudinary\"}"
+  },
+  {
+    "id": "log-1795788830230",
+    "action": "User Profile Updated",
+    "user": "omar@aurora.eg",
+    "timestamp": "2026-11-27T14:13:50.230Z",
+    "details": "{\"fields\":[\"photo\"]}"
+  },
+  {
     "id": "log-1795788410200",
     "action": "Google / Firebase SSO Login",
     "user": "omar@aurora.eg",
@@ -1342,61 +1398,5 @@
     "user": "mohamedeldkhmesy5246@gmail.com",
     "timestamp": "2026-10-27T15:16:16.302Z",
     "details": "{\"projectId\":\"proj-1793114130448\",\"reason\":\"fgfgfg\"}"
-  },
-  {
-    "id": "log-1793114175470",
-    "action": "Project Rejected",
-    "user": "mohamedeldkhmesy5246@gmail.com",
-    "timestamp": "2026-10-27T15:16:15.470Z",
-    "details": "{\"projectId\":\"proj-1793114130448\",\"reason\":\"fgfgfg\"}"
-  },
-  {
-    "id": "log-1793114164445",
-    "action": "Project Approved (Staged)",
-    "user": "mohamedeldkhmesy5246@gmail.com",
-    "timestamp": "2026-10-27T15:16:04.445Z",
-    "details": "{\"projectId\":\"proj-1793114130448\"}"
-  },
-  {
-    "id": "log-1793114159540",
-    "action": "Project Rejected",
-    "user": "mohamedeldkhmesy5246@gmail.com",
-    "timestamp": "2026-10-27T15:15:59.540Z",
-    "details": "{\"projectId\":\"proj-1793114132433\",\"reason\":\"fffff\"}"
-  },
-  {
-    "id": "log-1793114158168",
-    "action": "Project Rejected",
-    "user": "mohamedeldkhmesy5246@gmail.com",
-    "timestamp": "2026-10-27T15:15:58.168Z",
-    "details": "{\"projectId\":\"proj-1793114132433\",\"reason\":\"fffff\"}"
-  },
-  {
-    "id": "log-1793114132443",
-    "action": "Project Uploaded",
-    "user": "mohamedeldkhmesy5246@gmail.com",
-    "timestamp": "2026-10-27T15:15:32.443Z",
-    "details": "{\"projectId\":\"proj-1793114132433\",\"title\":\"f\"}"
-  },
-  {
-    "id": "log-1793114130458",
-    "action": "Project Uploaded",
-    "user": "mohamedeldkhmesy5246@gmail.com",
-    "timestamp": "2026-10-27T15:15:30.458Z",
-    "details": "{\"projectId\":\"proj-1793114130448\",\"title\":\"f\"}"
-  },
-  {
-    "id": "log-1793114106346",
-    "action": "New Industry Added",
-    "user": "mohamedeldkhmesy5246@gmail.com",
-    "timestamp": "2026-10-27T15:15:06.346Z",
-    "details": "{\"industry\":\"Df\"}"
-  },
-  {
-    "id": "log-1793113927781",
-    "action": "CRM Client Status Updated",
-    "user": "mohamedeldkhmesy5246@gmail.com",
-    "timestamp": "2026-10-27T15:12:07.781Z",
-    "details": "{\"inquiryId\":\"inq-1793046679324\",\"oldStatus\":\"Contacted\",\"newStatus\":\"Meeting Scheduled\"}"
   }
 ]

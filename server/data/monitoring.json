@@ -1,17 +1,17 @@
 {
-  "totalVisits": 2036,
+  "totalVisits": 2041,
   "pageViews": {
     "home": 1128,
     "about": 353,
     "services": 435,
-    "projects": 606,
+    "projects": 609,
     "contact": 229,
     "brief": 120,
     "team": 42,
     "admin": 86,
     "004712b6-e9ad-4ed1-a255-50043ece70de": 1,
-    "login": 101,
-    "portal": 11,
+    "login": 102,
+    "portal": 12,
     "teaam": 1,
     "amin": 1,
     "a": 1,
@@ -21,6 +21,36 @@
     "ADMIN": 2
   },
   "recentSessions": [
+    {
+      "ip": "::1",
+      "page": "/projects/taj-aleatur-luxury-commercial",
+      "referrer": "direct",
+      "time": "2026-11-27T14:34:22.525Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/projects",
+      "referrer": "direct",
+      "time": "2026-11-27T14:34:17.414Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/projects",
+      "referrer": "direct",
+      "time": "2026-11-27T14:30:14.312Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/login",
+      "referrer": "http://localhost:3000/portal",
+      "time": "2026-11-27T14:16:52.387Z"
+    },
+    {
+      "ip": "::1",
+      "page": "/portal",
+      "referrer": "http://localhost:3000/admin",
+      "time": "2026-11-27T14:12:28.503Z"
+    },
     {
       "ip": "::1",
       "page": "/login",
@@ -290,36 +320,6 @@
       "page": "/",
       "referrer": "direct",
       "time": "2026-11-27T02:07:39.026Z"
-    },
-    {
-      "ip": "::1",
-      "page": "/",
-      "referrer": "direct",
-      "time": "2026-11-27T02:07:35.159Z"
-    },
-    {
-      "ip": "::1",
-      "page": "/",
-      "referrer": "direct",
-      "time": "2026-11-27T02:03:30.241Z"
-    },
-    {
-      "ip": "::1",
-      "page": "/login",
-      "referrer": "http://localhost:3000/admin",
-      "time": "2026-11-27T02:02:10.519Z"
-    },
-    {
-      "ip": "::1",
-      "page": "/brief/22cb-mazen-salem",
-      "referrer": "direct",
-      "time": "2026-11-27T02:01:52.290Z"
-    },
-    {
-      "ip": "::1",
-      "page": "/brief/22cb-mazen-salem",
-      "referrer": "direct",
-      "time": "2026-11-27T01:59:53.948Z"
     }
   ]
 }

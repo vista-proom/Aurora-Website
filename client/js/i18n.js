@@ -367,7 +367,7 @@ export const translations = {
     "footer.servicePackaging": "Packaging Design",
     "footer.serviceWeb": "Web Strategy",
     "footer.addressHeader": "Visit & Contact",
-    "footer.rights": "© 2026 Aurora Group. All Rights Reserved. UR LIGHT.",
+    "footer.rights": "© 2026 Aurora. All Rights Reserved. UR LIGHT.",
     "footer.privacy": "Privacy Policy",
     "footer.terms": "Terms & Conditions",
 
@@ -754,7 +754,7 @@ export const translations = {
     "footer.servicePackaging": "تصميم التغليف",
     "footer.serviceWeb": "المواقع والاستراتيجية",
     "footer.addressHeader": "العنوان والتواصل",
-    "footer.rights": "© 2026 مجموعة أورورا. جميع الحقوق محفوظة. UR LIGHT.",
+    "footer.rights": "© 2026 أورورا. جميع الحقوق محفوظة. UR LIGHT.",
     "footer.privacy": "سياسة الخصوصية",
     "footer.terms": "الشروط والأحكام",
 

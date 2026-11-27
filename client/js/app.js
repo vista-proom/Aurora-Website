@@ -828,10 +828,6 @@ async function renderCaseStudy(slug) {
         <div class="meta-field-label">${t('cs.yearLabel')}</div>
         <div class="meta-field-val">${project.projectYear}</div>
       </div>
-      <div>
-        <div class="meta-field-label">${t('cs.teamLabel')}</div>
-        <div class="meta-field-val">${project.creditedStaff.join(', ')}</div>
-      </div>
     </div>
 
     <!-- Responsive YouTube Unlisted Player (Blank if no video) -->

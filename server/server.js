@@ -1538,25 +1538,31 @@ Aurora Group provides creative strategy, cinema 4K commercial production, corpor
   // 13. STATIC ASSETS CACHING & SPA ROUTING
   // -----------------------------------------------------------------------------
   // Static assets with aggressive caching headers
-  app.use(express.static(CLIENT_DIR, {
-    etag: true,
-    lastModified: true,
-    maxAge: isProd ? '1d' : 0,
-    setHeaders: (res, path) => {
-      if (path.endsWith('.html')) {
-        res.setHeader('Cache-Control', 'no-cache, must-revalidate');
-      } else if (path.match(/\.(jpg|jpeg|png|gif|webp|avif|svg|woff2|woff|ttf)$/i)) {
-        res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
-      } else if (path.match(/\.(css|js)$/i)) {
-        res.setHeader('Cache-Control', 'public, max-age=86400');
+  if (!process.env.VERCEL) {
+    app.use(express.static(CLIENT_DIR, {
+      etag: true,
+      lastModified: true,
+      maxAge: isProd ? '1d' : 0,
+      setHeaders: (res, path) => {
+        if (path.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+        } else if (path.match(/\.(jpg|jpeg|png|gif|webp|avif|svg|woff2|woff|ttf)$/i)) {
+          res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+        } else if (path.match(/\.(css|js)$/i)) {
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+        }
       }
-    }
-  }));
+    }));
 
-  // SPA Fallback Handler
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(CLIENT_DIR, 'index.html'));
-  });
+    // SPA Fallback Handler
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(CLIENT_DIR, 'index.html'));
+    });
+  } else {
+    app.get('/', (req, res) => {
+      res.json({ success: true, service: 'Aurora API', status: 'online' });
+    });
+  }
 
   // -----------------------------------------------------------------------------
   // 14. PRODUCTION ERROR HANDLER

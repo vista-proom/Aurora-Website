@@ -3708,13 +3708,13 @@ export function openCRMDetails(id) {
   const container = document.getElementById('crmDetailContent');
   if (container) {
     container.innerHTML = `
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; background:var(--surface-sunken); padding:14px; border-radius:var(--radius-sm); border:1px solid var(--border-default);">
-        <div><span style="font-size:11px; color:var(--text-muted); display:block; text-transform:uppercase;">Phone</span><strong>${escapeHtml(inq.phone)}</strong></div>
-        <div><span style="font-size:11px; color:var(--text-muted); display:block; text-transform:uppercase;">Email</span><strong>${escapeHtml(inq.email || '—')}</strong></div>
-        <div><span style="font-size:11px; color:var(--text-muted); display:block; text-transform:uppercase;">Budget</span><strong>${escapeHtml(inq.budget || '—')}</strong></div>
-        <div><span style="font-size:11px; color:var(--text-muted); display:block; text-transform:uppercase;">Industry</span><strong>${escapeHtml(inq.industry || '—')}</strong></div>
-        <div><span style="font-size:11px; color:var(--text-muted); display:block; text-transform:uppercase;">Submission Date</span><strong>${new Date(inq.createdAt).toLocaleString()}</strong></div>
-        <div><span style="font-size:11px; color:var(--text-muted); display:block; text-transform:uppercase;">Pipeline Status</span><span class="status-pill status-${(inq.status || 'Pending').toLowerCase().replace(/\s+/g, '-')}">${escapeHtml(inq.status)}</span></div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:14px 18px; background:var(--surface-sunken); padding:16px; border-radius:var(--radius-sm); border:1px solid var(--border-default);">
+        <div style="min-width:0;"><span style="font-size:11px; color:var(--text-muted); display:block; text-transform:uppercase; margin-bottom:2px;">Phone</span><strong style="display:block; overflow-wrap:anywhere; word-break:break-word;" dir="ltr">${escapeHtml(inq.phone)}</strong></div>
+        <div style="min-width:0;"><span style="font-size:11px; color:var(--text-muted); display:block; text-transform:uppercase; margin-bottom:2px;">Email</span><strong style="display:block; overflow-wrap:anywhere; word-break:break-word;" dir="ltr">${escapeHtml(inq.email || '—')}</strong></div>
+        <div style="min-width:0;"><span style="font-size:11px; color:var(--text-muted); display:block; text-transform:uppercase; margin-bottom:2px;">Budget</span><strong style="display:block; overflow-wrap:anywhere; word-break:break-word;">${escapeHtml(inq.budget || '—')}</strong></div>
+        <div style="min-width:0;"><span style="font-size:11px; color:var(--text-muted); display:block; text-transform:uppercase; margin-bottom:2px;">Industry</span><strong style="display:block; overflow-wrap:anywhere; word-break:break-word;">${escapeHtml(inq.industry || '—')}</strong></div>
+        <div style="min-width:0;"><span style="font-size:11px; color:var(--text-muted); display:block; text-transform:uppercase; margin-bottom:2px;">Submission Date</span><strong style="display:block; overflow-wrap:anywhere; word-break:break-word;">${new Date(inq.createdAt).toLocaleString()}</strong></div>
+        <div style="min-width:0;"><span style="font-size:11px; color:var(--text-muted); display:block; text-transform:uppercase; margin-bottom:4px;">Pipeline Status</span><span class="status-pill status-${(inq.status || 'Pending').toLowerCase().replace(/\s+/g, '-')}">${escapeHtml(inq.status)}</span></div>
       </div>
 
       <div>

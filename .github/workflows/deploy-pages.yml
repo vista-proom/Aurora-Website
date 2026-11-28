@@ -24,12 +24,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Prepare static client bundle
-        run: |
-          mkdir -p _site
-          cp -r client/* _site/
-          cp client/index.html _site/404.html
-          echo "aurora-eg.ziadbahgat.me" > _site/CNAME
+      - name: Build static client bundle with content hashes
+        run: node scripts/build-static.mjs
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

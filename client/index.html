@@ -196,27 +196,32 @@
     <link rel="stylesheet" href="/css/rtl.css">
   </noscript>
 
-  <!-- Deferred Google Analytics 4 (Loaded after interaction or idle) -->
+  <!-- Google Analytics 4 Configuration (Set real G-XXXXXXXXXX ID in AURORA_GA4_MEASUREMENT_ID to enable) -->
   <script>
+    window.AURORA_GA4_MEASUREMENT_ID = 'G-AURORA2026';
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     (function() {
       var gaLoaded = false;
+      function isRealGaId(id) {
+        return Boolean(id) && id !== 'G-AURORA2026' && /^G-[A-Z0-9]{6,}$/i.test(id);
+      }
       function loadGA() {
         if (gaLoaded) return;
+        var measurementId = window.AURORA_GA4_MEASUREMENT_ID;
+        if (!isRealGaId(measurementId)) return;
+        var consentMode = null;
+        try { consentMode = localStorage.getItem('aurora_cookie_consent'); } catch (e) {}
+        if (consentMode !== 'all') return;
         gaLoaded = true;
-        var consentMode = localStorage.getItem('aurora_cookie_consent');
         var s = document.createElement('script');
         s.async = true;
-        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-AURORA2026';
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(measurementId);
         document.head.appendChild(s);
         gtag('js', new Date());
-        if (consentMode === 'essential') {
-          gtag('consent', 'default', { 'analytics_storage': 'denied', 'ad_storage': 'denied' });
-        } else {
-          gtag('config', 'G-AURORA2026', { send_page_view: true });
-        }
+        gtag('config', measurementId, { send_page_view: true });
       }
+      window.auroraLoadGA = loadGA;
       ['pointerdown', 'keydown', 'scroll', 'touchstart'].forEach(function(ev) {
         window.addEventListener(ev, loadGA, { once: true, passive: true });
       });

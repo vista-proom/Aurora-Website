@@ -478,6 +478,9 @@ function initCookieConsent() {
     acceptBtn.onclick = () => {
       localStorage.setItem('aurora_cookie_consent', 'all');
       banner.style.display = 'none';
+      if (typeof window.auroraLoadGA === 'function') {
+        window.auroraLoadGA();
+      }
       if (typeof window.gtag === 'function') {
         window.gtag('consent', 'update', {
           analytics_storage: 'granted',

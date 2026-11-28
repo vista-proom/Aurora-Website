@@ -175,6 +175,20 @@ app.use((req, res, next) => {
   next();
 });
 
+// Authoritative Firestore Staff Directory Hydrator (zero-lag for Auth & Staff endpoints)
+async function hydrateUsersFromFirestore() {
+  try {
+    const freshUsers = await firebaseDbService.fetchUsers();
+    if (freshUsers && freshUsers.length) {
+      store.replaceUsers(freshUsers);
+    }
+    return freshUsers;
+  } catch (e) {
+    console.warn('[Firestore Users Hydrate Warning]:', e.message);
+    return null;
+  }
+}
+
 // Cloud Firestore Hydration Middleware for Structured Collections
 let lastCoreFirestoreSyncTs = 0;
 app.use('/api', async (req, res, next) => {
@@ -243,7 +257,7 @@ const SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15-minute sliding inactivity windo
  * Inspects HttpOnly signed cookie or Bearer token, verifies HMAC signature,
  * validates against staff directory, checks inactivity timeout, and enforces RBAC roles.
  */
-const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, res, next) => {
+const requireAuth = (allowedRoles = null, requiredPermissions = null) => async (req, res, next) => {
   let token = req.cookies?.aurora_session;
 
   // Fallback to Authorization: Bearer token if cookie is not present
@@ -262,7 +276,11 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
   }
 
   const cleanEmail = decoded.email.toLowerCase().trim();
-  const user = store.getUserByEmail(cleanEmail);
+  let user = store.getUserByEmail(cleanEmail);
+  if (!user) {
+    await hydrateUsersFromFirestore();
+    user = store.getUserByEmail(cleanEmail);
+  }
   if (!user || user.isActive === false) {
     res.clearCookie('aurora_session', { httpOnly: true, sameSite: 'lax' });
     return res.status(403).json({ success: false, error: 'Unauthorized user or deactivated account.' });
@@ -341,9 +359,10 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
       return res.status(400).json({ success: false, error: 'Valid email and password strings are required' });
     }
 
+    await hydrateUsersFromFirestore();
     const cleanEmail = email.trim().toLowerCase();
     const user = store.getUserByEmail(cleanEmail);
-    if (!user) {
+    if (!user || user.isActive === false) {
       return res.status(401).json({ success: false, error: 'Invalid credentials. User not found in staff directory.' });
     }
 
@@ -406,6 +425,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
       }
 
       const cleanEmail = verifiedUser.email.toLowerCase().trim();
+      await hydrateUsersFromFirestore();
       let user = store.getUserByEmail(cleanEmail);
 
       if (!user) {
@@ -417,7 +437,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
         }
       }
 
-      if (!user) {
+      if (!user || user.isActive === false) {
         return res.status(403).json({
           success: false,
           error: `The email "${cleanEmail}" is not authorized for staff access. Please add this email in Staff Users & Permissions first.`
@@ -426,9 +446,8 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
 
       store.logActivity('Google / Firebase SSO Login', user.email, { role: user.role });
 
-      // Ensure Firebase claims and RTDB match portal directory
+      // Ensure Firebase Auth custom claims match portal directory (never overwrite Firestore users from /tmp on login!)
       firebaseAuthService.updateUserClaims(user.email, user.role, user.permissions).catch(() => {});
-      firebaseDbService.syncUsers(store.getUsers()).catch(() => {});
 
       const sessionToken = issueSessionCookie(req, res, user);
       const { password: _, ...safeUser } = user;
@@ -452,6 +471,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
       }
 
       const email = req.authUser.email;
+      await hydrateUsersFromFirestore();
       const updated = store.updateUserProfile(email, {
         password: cleanNewPw,
         mustChangePassword: false,
@@ -463,7 +483,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
         return res.status(404).json({ success: false, error: 'User account not found.' });
       }
 
-      // Sync updated password and profile to Firebase Auth & Realtime Database
+      // Sync updated password and profile to Firebase Auth & Firestore
       await firebaseAuthService.updateFirebaseUser(email, {
         email: updated.email,
         displayName: updated.name,
@@ -471,7 +491,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
         role: updated.role,
         permissions: updated.permissions
       });
-      await firebaseDbService.syncUsers(store.getUsers());
+      await firebaseDbService.upsertUser(updated);
 
       store.logActivity('Staff Initial Password Changed', email, { role: updated.role });
 
@@ -509,6 +529,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
       return res.status(400).json({ success: false, error: 'Valid email address string is required' });
     }
 
+    await hydrateUsersFromFirestore();
     const cleanEmail = email.trim().toLowerCase();
     const user = store.getUserByEmail(cleanEmail);
 
@@ -643,17 +664,19 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
   // -----------------------------------------------------------------------------
   // 5. USER DIRECTORY & PROFILES (RBAC & RLS)
   // -----------------------------------------------------------------------------
-  app.get('/api/users', requireAuth(['super_admin', 'manager'], ['canManageUsers']), (req, res) => {
+  app.get('/api/users', requireAuth(['super_admin', 'manager'], ['canManageUsers']), async (req, res) => {
+    await hydrateUsersFromFirestore();
     const users = store.getUsers().map(({ password, ...u }) => u);
     res.json({ success: true, data: users });
   });
 
-  app.get('/api/team', (req, res) => {
+  app.get('/api/team', async (req, res) => {
     const settings = store.getSettings();
     if (settings.enableTeamDirectory === false) {
       return res.json({ success: true, enabled: false, data: [] });
     }
 
+    await hydrateUsersFromFirestore();
     const users = store.getUsers()
       .filter(u => u.isActive !== false)
       .map(({ password, permissions, mustResetPassword, mustChangePassword, passwordExpiredAt, ...safe }) => safe);
@@ -662,6 +685,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
   });
 
   app.get('/api/users/profile/:slug', async (req, res) => {
+    await hydrateUsersFromFirestore();
     const cleanSlug = sanitizeString(req.params.slug || '').toLowerCase().trim();
     let user = store.getUserBySlug(cleanSlug);
 
@@ -687,6 +711,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
 
   // Row-Level Security: Users can only update their own profile unless super_admin
   app.patch('/api/users/profile', requireAuth(), async (req, res) => {
+    await hydrateUsersFromFirestore();
     const actorEmail = req.authUser.email;
     const targetEmail = (req.body.email && req.authUser.role === 'super_admin') ? req.body.email : actorEmail;
 
@@ -704,7 +729,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
       return res.status(404).json({ success: false, error: 'User not found' });
     }
 
-    // Automatically sync adjusted staff profile to Firebase Auth & Firebase Realtime Database
+    // Automatically sync adjusted staff profile to Firebase Auth & Firestore
     await firebaseAuthService.updateFirebaseUser(targetEmail, {
       email: updated.email,
       displayName: updated.name,
@@ -712,7 +737,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
       role: updated.role,
       permissions: updated.permissions
     });
-    await firebaseDbService.syncUsers(store.getUsers());
+    await firebaseDbService.upsertUser(updated);
 
     if (mongoose.connection?.readyState === 1) {
       try {
@@ -731,7 +756,10 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
       return res.status(400).json({ success: false, error: 'Name and email are required' });
     }
 
-    const defaultPassword = (password && String(password).trim()) ? String(password).trim() : 'Aurora@2026';
+    await hydrateUsersFromFirestore();
+
+    const explicitPassword = Boolean(password && String(password).trim());
+    const defaultPassword = explicitPassword ? String(password).trim() : 'Aurora@2026';
     const requirePwChange = mustChangePassword !== undefined ? Boolean(mustChangePassword) : true;
 
     const newUser = store.addUser({
@@ -749,37 +777,53 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
       return res.status(400).json({ success: false, error: 'A staff member with this email already exists' });
     }
 
-    // 1. Automatically create & authorize user in Firebase Authentication
-    await firebaseAuthService.createFirebaseUser({
+    // 1. Create or link user in Firebase Authentication (preserves existing password if user already signed in previously)
+    const fbUserRecord = await firebaseAuthService.createFirebaseUser({
       email: newUser.email,
       password: defaultPassword,
+      explicitPassword,
       displayName: newUser.name,
       role: newUser.role,
       permissions: newUser.permissions
     });
 
-    // 2. Automatically sync full staff list to Firebase Realtime Database
-    await firebaseDbService.syncUsers(store.getUsers());
+    if (fbUserRecord && fbUserRecord.uid) {
+      newUser.firebaseUid = fbUserRecord.uid;
+    }
 
-    // 3. Automatically send Welcome Email with default password & access instructions
-    const hostUrl = `${req.protocol}://${req.get('host')}/login`;
-    const emailResult = await emailService.sendStaffWelcomeEmail({
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
-      title: newUser.title,
-      department: newUser.department,
-      defaultPassword,
-      mustChangePassword: newUser.mustChangePassword,
-      portalUrl: hostUrl
-    });
+    // 2. Atomically persist new staff record to Cloud Firestore `users` collection
+    const persisted = await firebaseDbService.upsertUser(newUser);
+    if (!persisted) {
+      store.deleteUser(newUser.id, 'system-rollback');
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to persist staff record to Cloud Firestore. Please verify Firebase database connection.'
+      });
+    }
+    await firebaseDbService.syncUsers(store.getUsers()).catch(() => {});
 
-    // Also dispatch real email via Google's Firebase Identity Toolkit mail servers
-    const fbEmailResult = await firebaseAuthService.sendFirebaseWelcomeEmail(
-      newUser.email,
-      newUser.name,
-      defaultPassword
-    );
+    // 3. Send Welcome Email only for newly created or never-signed-in Auth accounts (or when explicit password supplied)
+    const portalUrl = 'https://aurora-eg.ziadbahgat.me/login';
+    const alreadySignedIn = Boolean(fbUserRecord?._alreadyExisted && fbUserRecord?.metadata?.lastSignInTime && !explicitPassword);
+    let emailResult = { success: false, skippedExisting: alreadySignedIn };
+    if (!alreadySignedIn) {
+      emailResult = await emailService.sendStaffWelcomeEmail({
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        title: newUser.title,
+        department: newUser.department,
+        defaultPassword,
+        mustChangePassword: newUser.mustChangePassword,
+        portalUrl
+      });
+
+      await firebaseAuthService.sendFirebaseWelcomeEmail(
+        newUser.email,
+        newUser.name,
+        defaultPassword
+      );
+    }
 
     if (mongoose.connection?.readyState === 1) {
       try {
@@ -797,6 +841,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
   });
 
   app.put('/api/users/:id', requireAuth(['super_admin'], ['canEditStaff']), async (req, res) => {
+    await hydrateUsersFromFirestore();
     const { name, email, role, title, department, permissions, mustChangePassword, password } = req.body || {};
     const updatePayload = {};
     if (name !== undefined) updatePayload.name = sanitizeString(name);
@@ -818,7 +863,6 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
 
     const { previousEmail, user: updated } = result;
 
-    // Automatically sync adjusted staff details to Firebase Auth & Firebase Realtime Database
     await firebaseAuthService.updateFirebaseUser(previousEmail, {
       email: updated.email,
       displayName: updated.name,
@@ -826,7 +870,11 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
       role: updated.role,
       permissions: updated.permissions
     });
-    await firebaseDbService.syncUsers(store.getUsers());
+    const persisted = await firebaseDbService.upsertUser(updated);
+    if (!persisted) {
+      return res.status(500).json({ success: false, error: 'Failed to persist updated staff record to Cloud Firestore.' });
+    }
+    await firebaseDbService.syncUsers(store.getUsers()).catch(() => {});
 
     const { password: _, ...safeUser } = updated;
     res.json({
@@ -837,14 +885,14 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
   });
 
   app.delete('/api/users/:id', requireAuth(['super_admin'], ['canDeleteStaff']), async (req, res) => {
+    await hydrateUsersFromFirestore();
     const deleted = store.deleteUser(req.params.id, req.authUser.email);
     if (!deleted) {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
 
-    // Automatically delete user from Firebase Auth & sync clean staff list to Firebase Realtime Database
     await firebaseAuthService.deleteFirebaseUser(deleted.email);
-    await firebaseDbService.syncUsers(store.getUsers());
+    await firebaseDbService.deleteUserDoc(deleted.id, deleted.email);
 
     if (mongoose.connection?.readyState === 1) {
       try {
@@ -856,25 +904,26 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
   });
 
   app.patch('/api/users/:id/permissions', requireAuth(['super_admin'], ['canEditStaff']), async (req, res) => {
+    await hydrateUsersFromFirestore();
     const { role, permissions } = req.body;
     const updated = store.updateUserPermissions(req.params.id, role, permissions, req.authUser.email);
     if (!updated) {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
 
-    // Automatically sync updated role & permissions to Firebase Auth & Firebase Realtime Database
     await firebaseAuthService.updateFirebaseUser(updated.email, {
       displayName: updated.name,
       role: updated.role,
       permissions: updated.permissions
     });
-    await firebaseDbService.syncUsers(store.getUsers());
+    await firebaseDbService.upsertUser(updated);
 
     const { password: _, ...safeUser } = updated;
     res.json({ success: true, data: safeUser });
   });
 
   app.post('/api/users/:id/expire-password', requireAuth(['super_admin'], ['canResetStaffPassword']), async (req, res) => {
+    await hydrateUsersFromFirestore();
     const user = store.expireUserPassword(req.params.id, req.authUser.email);
     if (!user) {
       return res.status(404).json({ success: false, error: 'Staff member not found' });
@@ -885,7 +934,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     if (fbResult && fbResult.resetLink) {
       resetLink = fbResult.resetLink;
     }
-    await firebaseDbService.syncUsers(store.getUsers());
+    await firebaseDbService.upsertUser(user);
 
     res.json({
       success: true,

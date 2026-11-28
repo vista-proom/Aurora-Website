@@ -64,7 +64,7 @@ class FirebaseAuthService {
       }
     }
 
-    const apps = getApps();
+    const apps = getApps().filter(a => a.name !== 'aurora-firebase-db');
     if (apps.length > 0) {
       if (!forceReinit && this.hasFullAdminAccess) {
         this.isInitialized = true;
@@ -72,7 +72,7 @@ class FirebaseAuthService {
         this.projectId = apps[0].options.projectId;
         return;
       }
-      // If we need to reinit or upgrade to full service account credentials, delete existing apps
+      // If we need to reinit or upgrade to full service account credentials, delete only default/auth apps (never aurora-firebase-db)
       for (const app of apps) {
         try {
           await deleteApp(app);
@@ -129,7 +129,7 @@ class FirebaseAuthService {
   /**
    * Creates or updates a user directly in Firebase Authentication
    */
-  async createFirebaseUser({ email, password, displayName, role, permissions }) {
+  async createFirebaseUser({ email, password, explicitPassword = false, displayName, role, permissions }) {
     if (!this.adminApp || !this.hasFullAdminAccess) {
       console.log('[Firebase Auth] Admin SDK not initialized with service account key; user saved in DataStore.');
       return null;
@@ -139,13 +139,18 @@ class FirebaseAuthService {
       const auth = getAuth(this.adminApp);
       const cleanEmail = (email || '').toLowerCase().trim();
       let userRecord;
+      let alreadyExisted = false;
       try {
         userRecord = await auth.getUserByEmail(cleanEmail);
+        alreadyExisted = true;
         const updatePayload = { emailVerified: true };
-        if (password) updatePayload.password = password;
+        const hasSignedInBefore = Boolean(userRecord.metadata?.lastSignInTime);
+        if (password && (explicitPassword || !hasSignedInBefore)) {
+          updatePayload.password = password;
+        }
         if (displayName) updatePayload.displayName = displayName;
         userRecord = await auth.updateUser(userRecord.uid, updatePayload);
-        console.log(`[Firebase Auth Admin] Updated existing Firebase user: ${cleanEmail}`);
+        console.log(`[Firebase Auth Admin] Updated existing Firebase user: ${cleanEmail} (preservedPassword=${hasSignedInBefore && !explicitPassword})`);
       } catch (err) {
         if (err.code === 'auth/user-not-found') {
           userRecord = await auth.createUser({
@@ -168,6 +173,7 @@ class FirebaseAuthService {
         });
       }
 
+      userRecord._alreadyExisted = alreadyExisted;
       return userRecord;
     } catch (err) {
       console.warn('[Firebase Auth Admin createUser Warning]:', err.message);

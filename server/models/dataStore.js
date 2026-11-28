@@ -691,7 +691,10 @@ class DataStoreV2 {
     };
 
     const role = userData.role || 'employee';
-    const permissions = userData.permissions || defaultRolePerms[role] || defaultRolePerms.employee;
+    const hasExplicitPerms = userData.permissions && typeof userData.permissions === 'object' && Object.values(userData.permissions).some(Boolean);
+    const permissions = (hasExplicitPerms || role === 'employee')
+      ? (userData.permissions || defaultRolePerms.employee)
+      : (defaultRolePerms[role] || defaultRolePerms.employee);
     const name = userData.name || 'Staff Member';
     const slug = userData.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `staff-${Date.now()}`;
 

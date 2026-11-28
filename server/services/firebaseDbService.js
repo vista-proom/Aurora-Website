@@ -257,17 +257,85 @@ class FirebaseDbService {
   }
 
   async syncUsers(users) {
-    if (!this.isConnected || !this.db) return;
-    try {
-      const safe = (users || []).map(u => {
-        const { password, ...s } = u;
-        return s;
-      });
-      await this.db.ref('users').set(safe);
+    if (!this.isConnected || !this.firestore) {
+      await this.init();
+    }
+    if (!this.firestore && !this.db) return false;
+    const FALLBACK_AVATAR = 'https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg';
+    const safe = (users || []).filter(Boolean).map(u => {
+      const { password, ...s } = u;
+      if (!s.photo || s.photo === '/assets/Image_error.jpg') s.photo = FALLBACK_AVATAR;
+      return s;
+    });
+    let firestoreSaved = false;
+    if (this.firestore) {
       await this.syncCollectionToFirestore('users', safe, u => u.id || u.email);
-      console.log(`[Firebase DB] Synced ${safe.length} staff user(s) to Realtime Database & Firestore.`);
+      firestoreSaved = true;
+    }
+    if (this.db) {
+      try {
+        await this.db.ref('users').set(safe);
+      } catch (e) {
+        console.warn('[Firebase RTDB Sync Users Warning]:', e.message);
+      }
+    }
+    console.log(`[Firebase DB] Synced ${safe.length} staff user(s) to Firestore & Realtime Database.`);
+    return firestoreSaved;
+  }
+
+  async upsertUser(user) {
+    if (!user || (!user.id && !user.email)) return false;
+    if (!this.isConnected || !this.firestore) {
+      await this.init();
+    }
+    if (!this.firestore) return false;
+    try {
+      const FALLBACK_AVATAR = 'https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg';
+      const { password, ...safe } = user;
+      if (!safe.photo || safe.photo === '/assets/Image_error.jpg') safe.photo = FALLBACK_AVATAR;
+      const docId = String(safe.id || safe.email).replace(/[\/.#$\[\]]/g, '_');
+      await this.firestore.collection('users').doc(docId).set(JSON.parse(JSON.stringify(safe)), { merge: true });
+      if (this.db) {
+        try {
+          await this.db.ref(`users_by_id/${docId}`).set(JSON.parse(JSON.stringify(safe)));
+        } catch {}
+      }
+      return true;
     } catch (e) {
-      console.warn('[Firebase DB Sync Users Error]:', e.message);
+      console.error('[Firestore Upsert User Error]:', e.message);
+      return false;
+    }
+  }
+
+  async deleteUserDoc(userId, email) {
+    if (!this.isConnected || !this.firestore) {
+      await this.init();
+    }
+    if (!this.firestore) return false;
+    try {
+      const col = this.firestore.collection('users');
+      if (userId) {
+        const docId = String(userId).replace(/[\/.#$\[\]]/g, '_');
+        await col.doc(docId).delete();
+      }
+      if (email) {
+        const cleanEmail = String(email).toLowerCase().trim();
+        const snap = await col.get();
+        const matches = snap.docs.filter(d => (d.data()?.email || '').toLowerCase().trim() === cleanEmail);
+        for (const d of matches) {
+          await d.ref.delete();
+        }
+      }
+      if (this.db) {
+        try {
+          const fresh = await this.fetchUsers();
+          if (fresh) await this.db.ref('users').set(fresh);
+        } catch {}
+      }
+      return true;
+    } catch (e) {
+      console.error('[Firestore Delete User Error]:', e.message);
+      return false;
     }
   }
 

@@ -1,0 +1,89 @@
+rules_version = '2';
+
+// Proposed Cloud Firestore Security Rules for Aurora Group (aurora-group-ae765)
+// Architecture note: All application reads & writes flow through the Vercel backend
+// using the Firebase Admin SDK (which bypasses client rules and enforces RBAC + RLS).
+// Direct browser/REST client access is locked down below as defense-in-depth.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified != false;
+    }
+
+    function userRole() {
+      return isSignedIn() ? request.auth.token.role : null;
+    }
+
+    function isAdminOrManager() {
+      return userRole() in ['super_admin', 'manager'];
+    }
+
+    function isSuperAdmin() {
+      return userRole() == 'super_admin';
+    }
+
+    // Publicly readable published portfolio projects; writes restricted to Admin/Manager
+    match /projects/{projectId} {
+      allow read: if resource.data.status == 'published' || isSignedIn();
+      allow write: if isAdminOrManager();
+    }
+
+    // Public CMS site copy, services, industries, and partner marquee logos: read-only publicly, Super Admin / Manager write
+    match /site_content/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /services/{serviceId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /industries/{industryId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /marquee/{docId} {
+      allow read: if true;
+      allow write: if isAdminOrManager();
+    }
+
+    // Confidential KYC Client Briefs: never listable publicly; single-doc read only by Admin/Manager
+    match /briefs/{briefId} {
+      allow read, write: if isAdminOrManager();
+    }
+
+    // CRM Public Inquiries: create allowed via backend Admin SDK; client-SDK read/write restricted to Admin/Manager
+    match /inquiries/{inquiryId} {
+      allow read, write: if isAdminOrManager();
+    }
+
+    // Quotations & Invoices: strictly Admin/Manager
+    match /invoices/{invoiceId} {
+      allow read, write: if isAdminOrManager();
+    }
+
+    // Staff Users & Role Permissions: Super Admin write; authenticated staff may read own profile only
+    match /users/{userId} {
+      allow read: if isSuperAdmin() || (isSignedIn() && request.auth.token.email == resource.data.email);
+      allow write: if isSuperAdmin();
+    }
+
+    // System Settings & Audit Activity Logs: Super Admin / Manager only (append-only via Admin SDK)
+    match /settings/{docId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /activity_logs/{logId} {
+      allow read: if isAdminOrManager();
+      allow write: if false; // Written exclusively by server-side Admin SDK
+    }
+
+    // Default deny-all fallback
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -46,6 +46,21 @@ export async function initFirebaseClient() {
     const { getAuth, GoogleAuthProvider } = authModule;
 
     const app = getApps().length === 0 ? initializeApp(currentConfig) : getApps()[0];
+
+    // Optional Firebase App Check (reCAPTCHA v3) — activates automatically once site key is configured
+    const recaptchaSiteKey = settings.firebaseRecaptchaSiteKey || window.AURORA_RECAPTCHA_SITE_KEY;
+    if (recaptchaSiteKey) {
+      try {
+        const { initializeAppCheck, ReCaptchaV3Provider } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js');
+        initializeAppCheck(app, {
+          provider: new ReCaptchaV3Provider(recaptchaSiteKey),
+          isTokenAutoRefreshEnabled: true
+        });
+      } catch (appCheckErr) {
+        console.warn('[Firebase App Check Warning]:', appCheckErr.message);
+      }
+    }
+
     firebaseAuthInstance = getAuth(app);
     googleProviderInstance = new GoogleAuthProvider();
     googleProviderInstance.addScope('email');

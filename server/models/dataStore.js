@@ -44,7 +44,7 @@ const DEFAULT_USERS = [
     title: "Agency Director & Founder",
     department: "Executive Management",
     slug: "ziad-bahgat",
-    photo: "/assets/Image_error.jpg",
+    photo: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
     bioEn: "Leading Aurora Group across strategic media production, creative direction, and commercial growth.",
     bioAr: "قيادة مجموعة أورورا عبر الإنتاج الإعلامي الاستراتيجي، والتوجيه الإبداعي، والنمو التجاري.",
     theme: "system",
@@ -72,7 +72,7 @@ const DEFAULT_USERS = [
     title: "Operations & Account Director",
     department: "Client Services",
     slug: "ahmed-mostafa",
-    photo: "/assets/Image_error.jpg",
+    photo: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
     bioEn: "Managing high-impact client campaigns, production logistics, and performance marketing workflows.",
     bioAr: "إدارة حملات العملاء والإنتاج اللوجستي وسير عمل التسويق الرقمي.",
     theme: "light",
@@ -100,7 +100,7 @@ const DEFAULT_USERS = [
     title: "Lead Commercial Videographer & Director",
     department: "Media Production",
     slug: "omar-hassan",
-    photo: "/assets/Image_error.jpg",
+    photo: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
     bioEn: "Specializing in dynamic 4K cinema commercials, luxury lighting and Hollywood color grading for leading brands in Egypt and the Gulf.",
     bioAr: "متخصص في تصوير الإعلانات السينمائية 4K والإضاءة الدرامية وتلوين هوليوود للعلامات التجارية في مصر والخليج.",
     theme: "system",
@@ -161,10 +161,10 @@ const DEFAULT_PROJECTS = [
     isApproved: true,
     isPublished: true,
     status: "published",
-    heroImage: "/assets/Image_error.jpg",
+    heroImage: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
     mediaGallery: [
-      { type: "photo", url: "/assets/Image_error.jpg", caption: "Bottle composition & lighting" },
-      { type: "photo", url: "/assets/Image_error.jpg", caption: "Color grade test DaVinci" }
+      { type: "photo", url: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg", caption: "Bottle composition & lighting" },
+      { type: "photo", url: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg", caption: "Color grade test DaVinci" }
     ],
     auditLog: [
       { action: "Created & Published", changedBy: "admin@aurora.eg", timestamp: new Date().toISOString(), changesSummary: "Initial project setup" }
@@ -193,9 +193,9 @@ const DEFAULT_PROJECTS = [
     isApproved: true,
     isPublished: true,
     status: "published",
-    heroImage: "/assets/Image_error.jpg",
+    heroImage: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
     mediaGallery: [
-      { type: "photo", url: "/assets/Image_error.jpg", caption: "Clinic atmosphere" }
+      { type: "photo", url: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg", caption: "Clinic atmosphere" }
     ],
     auditLog: [
       { action: "Approved & Published", changedBy: "admin@aurora.eg", timestamp: new Date().toISOString(), changesSummary: "Approved case study" }
@@ -224,9 +224,9 @@ const DEFAULT_PROJECTS = [
     isApproved: true,
     isPublished: true,
     status: "published",
-    heroImage: "/assets/Image_error.jpg",
+    heroImage: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
     mediaGallery: [
-      { type: "photo", url: "/assets/Image_error.jpg", caption: "Training intensity" }
+      { type: "photo", url: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg", caption: "Training intensity" }
     ],
     auditLog: [
       { action: "Approved & Published", changedBy: "admin@aurora.eg", timestamp: new Date().toISOString(), changesSummary: "Approved case study" }
@@ -320,24 +320,24 @@ class DataStoreV2 {
       this.write(this.marqueeFile, {
         speedSeconds: 35,
         logos: [
-          { id: "ml-1", name: "Dr Mostafa Elbardan", src: "/assets/logos/Dr Mostafa  Elbardan Orthopepedic Surgery  specialist.png" },
-          { id: "ml-2", name: "El Shekh Mobile Services", src: "/assets/logos/EL SHEKH MOBILE SERVICES.png" },
-          { id: "ml-3", name: "El-Sakka Academy", src: "/assets/logos/El-Sakka Acadimy.png" },
-          { id: "ml-4", name: "Fire Academy", src: "/assets/logos/FIRE ACADEMY.png" },
-          { id: "ml-5", name: "SES Sustainable Energy Solutions", src: "/assets/logos/SES - SUSTAINABLE ENERGY SOLUTIONS.png" },
-          { id: "ml-6", name: "Sharks Co-working Space", src: "/assets/logos/SHARKS CO-WORKING SPACE.png" },
-          { id: "ml-7", name: "Sparta Smart Academy", src: "/assets/logos/SPARTA - SMART ACADEMY.png" },
-          { id: "ml-8", name: "Só.pra Fragrances", src: "/assets/logos/SÓ.PRA FRAGRANCES.png" },
-          { id: "ml-9", name: "TAG", src: "/assets/logos/TAG.png" },
-          { id: "ml-10", name: "TAJ", src: "/assets/logos/TAJ.png" },
-          { id: "ml-11", name: "X Fighter Club", src: "/assets/logos/XFIGHTER CLUB.png" },
-          { id: "ml-12", name: "XPower Nutrition", src: "/assets/logos/XP0WER NUTRITION.png" },
-          { id: "ml-13", name: "Centro Mall", src: "/assets/logos/centro mall.png" },
-          { id: "ml-14", name: "Friends Club", src: "/assets/logos/friends club.png" },
-          { id: "ml-15", name: "عيادات النخبة التجميلية", src: "/assets/logos/عيادات النخبة التجميلية.png" },
-          { id: "ml-16", name: "عيادات النخبة التخصصية", src: "/assets/logos/عيادات النخبة التخصصية.png" },
-          { id: "ml-17", name: "Dr. Mohamed Anwar Orief Clinic", src: "/assets/logos/Dr Mohamed Anwar Orief Clinic.png" },
-          { id: "ml-18", name: "نبت NABT", src: "/assets/logos/نَبْت NABT.png" }
+          { id: "ml-1", name: "Dr Mostafa Elbardan", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892010/aurora/assets/logos/Dr_Mostafa_Elbardan_Orthopepedic_Surgery_specialist_424602.png" },
+          { id: "ml-2", name: "El Shekh Mobile Services", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892012/aurora/assets/logos/EL_SHEKH_MOBILE_SERVICES_c0fd84.png" },
+          { id: "ml-3", name: "El-Sakka Academy", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892014/aurora/assets/logos/El-Sakka_Acadimy_31425b.png" },
+          { id: "ml-4", name: "Fire Academy", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892016/aurora/assets/logos/FIRE_ACADEMY_acf97f.png" },
+          { id: "ml-5", name: "SES Sustainable Energy Solutions", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892019/aurora/assets/logos/SES_-_SUSTAINABLE_ENERGY_SOLUTIONS_2d6b33.png" },
+          { id: "ml-6", name: "Sharks Co-working Space", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892024/aurora/assets/logos/SHARKS_CO-WORKING_SPACE_f5a667.png" },
+          { id: "ml-7", name: "Sparta Smart Academy", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892026/aurora/assets/logos/SPARTA_-_SMART_ACADEMY_4946d0.png" },
+          { id: "ml-8", name: "Só.pra Fragrances", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892029/aurora/assets/logos/S_PRA_FRAGRANCES_978e72.png" },
+          { id: "ml-9", name: "TAG", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892049/aurora/assets/logos/TAG_afb306.png" },
+          { id: "ml-10", name: "TAJ", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892059/aurora/assets/logos/TAJ_fb8c18.png" },
+          { id: "ml-11", name: "X Fighter Club", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892064/aurora/assets/logos/XFIGHTER_CLUB_c027de.png" },
+          { id: "ml-12", name: "XPower Nutrition", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892066/aurora/assets/logos/XP0WER_NUTRITION_61092f.png" },
+          { id: "ml-13", name: "Centro Mall", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892002/aurora/assets/logos/centro_mall_b61497.png" },
+          { id: "ml-14", name: "Friends Club", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892017/aurora/assets/logos/friends_club_80b52d.png" },
+          { id: "ml-15", name: "عيادات النخبة التجميلية", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892071/aurora/assets/logos/asset_52b48d.png" },
+          { id: "ml-16", name: "عيادات النخبة التخصصية", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892076/aurora/assets/logos/asset_70148c.png" },
+          { id: "ml-17", name: "Dr. Mohamed Anwar Orief Clinic", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892004/aurora/assets/logos/Dr_Mohamed_Anwar_Orief_Clinic_16baf0.png" },
+          { id: "ml-18", name: "نبت NABT", src: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_224/v1795892079/aurora/assets/logos/NABT_5af51c.png" }
         ]
       });
     }
@@ -708,7 +708,7 @@ class DataStoreV2 {
       title: userData.title || "Team Member",
       department: userData.department || "General",
       slug,
-      photo: userData.photo || "/assets/Image_error.jpg",
+      photo: userData.photo || "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
       bioEn: userData.bioEn || "",
       bioAr: userData.bioAr || "",
       theme: "system",
@@ -884,9 +884,9 @@ class DataStoreV2 {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, ''),
       ...projectData,
-      heroImage: projectData.heroImage || projectData.photoUrl || "/assets/Image_error.jpg",
+      heroImage: projectData.heroImage || projectData.photoUrl || "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
       mediaGallery: projectData.mediaGallery && projectData.mediaGallery.length ? projectData.mediaGallery : [
-        { type: "photo", url: "/assets/Image_error.jpg", caption: "Project Still" }
+        { type: "photo", url: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg", caption: "Project Still" }
       ],
       creditedStaff: projectData.creditedStaff && projectData.creditedStaff.length ? projectData.creditedStaff : [authorName],
       authorEmail,

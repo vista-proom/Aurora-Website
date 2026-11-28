@@ -31,6 +31,23 @@ let currentCaseStudySlug = null;
 let allAdminMarqueeData = { speedSeconds: 35, logos: [] };
 let isLoggingIn = false;
 
+const CLOUDINARY_FALLBACK_IMG = 'https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg';
+
+function optimizeCloudinaryUrl(url, width = 760) {
+  const src = (url && typeof url === 'string' && !url.startsWith('/assets/')) ? url : CLOUDINARY_FALLBACK_IMG;
+  if (!src.includes('res.cloudinary.com/') || !src.includes('/image/upload/') || src.endsWith('.svg')) {
+    return src;
+  }
+  // Replace existing f_auto,q_auto,w_NNN or inject right after /image/upload/
+  if (/\/image\/upload\/f_auto,q_auto,w_\d+\//.test(src)) {
+    return src.replace(/\/image\/upload\/f_auto,q_auto,w_\d+\//, `/image/upload/f_auto,q_auto,w_${width}/`);
+  }
+  if (/\/image\/upload\/v\d+\//.test(src)) {
+    return src.replace('/image/upload/', `/image/upload/f_auto,q_auto,w_${width}/`);
+  }
+  return src;
+}
+
 // -----------------------------------------------------------------------------
 // TOAST NOTIFICATIONS & GLOBAL ALERT REPLACEMENT (5-Second Auto Dismiss)
 // -----------------------------------------------------------------------------
@@ -590,7 +607,7 @@ function renderHomeSelectedWork() {
   container.innerHTML = selected.map((p) => `
     <article class="project-card" onclick="window.auroraNavigate('/projects/${p.slug}')">
       <div class="project-media-preview">
-        <img src="${p.heroImage || p.mediaGallery[0]?.url || '/assets/Image_error.jpg'}" alt="${p.clientName}" loading="lazy" />
+        <img src="${optimizeCloudinaryUrl(p.heroImage || p.mediaGallery?.[0]?.url, 760)}" alt="${escapeHtml(p.clientName)}" width="400" height="260" loading="lazy" decoding="async" />
       </div>
       <div class="project-body">
         <div class="project-meta-row">
@@ -680,7 +697,7 @@ export function filterProjectsByKeyword(term) {
   container.innerHTML = filtered.map((p) => `
     <article class="project-card" onclick="window.auroraNavigate('/projects/${p.slug}')">
       <div class="project-media-preview">
-        <img src="${p.heroImage || p.mediaGallery[0]?.url || '/assets/Image_error.jpg'}" alt="${p.clientName}" loading="lazy" />
+        <img src="${optimizeCloudinaryUrl(p.heroImage || p.mediaGallery?.[0]?.url, 760)}" alt="${escapeHtml(p.clientName)}" width="400" height="260" loading="lazy" decoding="async" />
       </div>
       <div class="project-body">
         <div class="project-meta-row">
@@ -717,7 +734,7 @@ function renderProjectsGrid(category = 'all') {
   container.innerHTML = filtered.map((p) => `
     <article class="project-card" onclick="window.auroraNavigate('/projects/${p.slug}')">
       <div class="project-media-preview">
-        <img src="${p.heroImage || p.mediaGallery[0]?.url || '/assets/Image_error.jpg'}" alt="${p.clientName}" loading="lazy" />
+        <img src="${optimizeCloudinaryUrl(p.heroImage || p.mediaGallery?.[0]?.url, 760)}" alt="${escapeHtml(p.clientName)}" width="400" height="260" loading="lazy" decoding="async" />
       </div>
       <div class="project-body">
         <div class="project-meta-row">
@@ -793,7 +810,7 @@ async function renderCaseStudy(slug) {
   }
 
   const isAr = getLanguage() === 'ar';
-  const heroImg = project.heroImage || project.mediaGallery[0]?.url || '/assets/Image_error.jpg';
+  const heroImg = project.heroImage || project.mediaGallery[0]?.url || 'https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg';
   const displayTitle = isAr && project.titleAr ? project.titleAr : project.titleEn;
   const displaySummary = isAr && project.summaryAr ? project.summaryAr : project.summaryEn;
 
@@ -806,7 +823,7 @@ async function renderCaseStudy(slug) {
 
     <!-- Expanded Hero Photo Banner with Bottom-Left Text Overlay (Requirement 4.2) -->
     <div class="case-study-hero-banner">
-      <img src="${heroImg}" alt="${project.clientName}" class="case-study-hero-img" />
+      <img src="${optimizeCloudinaryUrl(heroImg, 1280)}" alt="${escapeHtml(project.clientName)}" class="case-study-hero-img" width="1200" height="520" loading="eager" decoding="async" />
       <div class="case-study-hero-overlay">
         <span class="badge badge-teal" style="margin-bottom: 12px;">${translateIndustry(project.industryCategory, isAr ? 'ar' : 'en')}</span>
         <h1>${displayTitle}</h1>
@@ -872,7 +889,7 @@ async function renderCaseStudy(slug) {
       <div class="gallery-grid">
         ${(project.mediaGallery || []).map((m) => `
           <div class="gallery-item" onclick="window.auroraOpenLightbox('${m.url}', '${m.caption || project.clientName}')">
-            <img src="${m.url}" alt="${m.caption || ''}" loading="lazy" />
+            <img src="${optimizeCloudinaryUrl(m.url, 640)}" alt="${escapeHtml(m.caption || project.clientName)}" width="400" height="280" loading="lazy" decoding="async" />
           </div>
         `).join('')}
       </div>
@@ -940,7 +957,7 @@ async function renderPublicTeamDirectory() {
           <article class="project-card team-card" onclick="window.auroraNavigate('/team/${m.slug || m.id}')" style="cursor:pointer; display:flex; flex-direction:column; justify-content:space-between; height:100%; transition:all 0.25s ease;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='var(--shadow-hover)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
             <div class="project-body" style="padding:32px 24px; display:flex; flex-direction:column; align-items:center; text-align:center; flex:1;">
               <div style="position:relative; margin-bottom:18px;">
-                <img src="${m.photo || '/assets/Image_error.jpg'}" alt="${m.name}" style="width:110px; height:110px; border-radius:50%; object-fit:cover; border:3px solid var(--accent-action); box-shadow:0 8px 24px rgba(106,0,244,0.18);" onerror="this.src='/assets/Image_error.jpg'" loading="lazy">
+                <img src="${optimizeCloudinaryUrl(m.photo, 240)}" alt="${escapeHtml(m.name)}" width="110" height="110" style="width:110px; height:110px; border-radius:50%; object-fit:cover; border:3px solid var(--accent-action); box-shadow:0 8px 24px rgba(106,0,244,0.18);" onerror="this.src='${CLOUDINARY_FALLBACK_IMG}'" loading="lazy" decoding="async">
                 ${(m.clipsCount > 0 || (m.portfolioClips && m.portfolioClips.length > 0)) ? `
                   <span class="badge badge-accent" style="position:absolute; bottom:-6px; left:50%; transform:translateX(-50%); font-size:10px; padding:2px 8px; white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,0.2);">🎬 ${(m.clipsCount || m.portfolioClips?.length)} ${isAr ? 'عمل مميز' : 'Featured Clips'}</span>
                 ` : ''}
@@ -1021,7 +1038,7 @@ async function renderPublicTeamProfile(slug) {
 
       <div class="card" style="margin-bottom:40px; padding:36px; border:1px solid var(--border-default);">
         <div style="display:flex; gap:28px; align-items:center; flex-wrap:wrap;">
-          <img src="${user.photo || '/assets/Image_error.jpg'}" alt="${user.name}" style="width:110px; height:110px; border-radius:50%; object-fit:cover; border:3px solid var(--accent-action); box-shadow:0 8px 24px rgba(106,0,244,0.18);" onerror="this.src='/assets/Image_error.jpg'">
+          <img src="${optimizeCloudinaryUrl(user.photo, 240)}" alt="${escapeHtml(user.name)}" width="110" height="110" style="width:110px; height:110px; border-radius:50%; object-fit:cover; border:3px solid var(--accent-action); box-shadow:0 8px 24px rgba(106,0,244,0.18);" onerror="this.src='${CLOUDINARY_FALLBACK_IMG}'" decoding="async">
           <div>
             <span class="badge badge-accent" style="margin-bottom:8px;">${user.department || (isAr ? 'فريق العمل' : 'Team Member')}</span>
             <h1 style="margin-bottom:6px;">${user.name}</h1>
@@ -1044,7 +1061,7 @@ async function renderPublicTeamProfile(slug) {
                 ${projects && projects.length ? projects.map(p => `
                   <article class="project-card" onclick="window.auroraNavigate('/projects/${p.slug}')" style="cursor:pointer;">
                     <div class="project-media-preview">
-                      <img src="${p.heroImage || (p.mediaGallery && p.mediaGallery[0]?.url) || '/assets/Image_error.jpg'}" alt="${p.clientName}" loading="lazy" onerror="this.src='/assets/Image_error.jpg'" />
+                      <img src="${optimizeCloudinaryUrl(p.heroImage || (p.mediaGallery && p.mediaGallery[0]?.url), 760)}" alt="${escapeHtml(p.clientName)}" width="400" height="260" loading="lazy" decoding="async" onerror="this.src='${CLOUDINARY_FALLBACK_IMG}'" />
                     </div>
                     <div class="project-body">
                       <div class="project-meta-row">
@@ -1067,7 +1084,7 @@ async function renderPublicTeamProfile(slug) {
           if (!piecesOfContent.length && projects && projects.length) {
             projects.forEach(p => {
               const gallery = (p.mediaGallery && p.mediaGallery.length) ? p.mediaGallery : [
-                { type: 'photo', url: p.heroImage || '/assets/Image_error.jpg', caption: isAr ? (p.titleAr || p.titleEn) : p.titleEn }
+                { type: 'photo', url: p.heroImage || 'https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg', caption: isAr ? (p.titleAr || p.titleEn) : p.titleEn }
               ];
               gallery.forEach((g, idx) => {
                 piecesOfContent.push({
@@ -1089,7 +1106,7 @@ async function renderPublicTeamProfile(slug) {
               ${piecesOfContent && piecesOfContent.length ? piecesOfContent.map(clip => `
                 <article class="project-card" style="cursor: pointer; overflow:hidden;" onclick="window.auroraOpenLightbox('${clip.url}', '${(clip.caption || '').replace(/'/g, "\\'")}')">
                   <div class="project-media-preview" style="height: 220px; position:relative;">
-                    <img src="${clip.url}" alt="${clip.caption || 'Content Piece'}" loading="lazy" onerror="this.src='/assets/Image_error.jpg'" style="width:100%; height:100%; object-fit:cover;" />
+                    <img src="${optimizeCloudinaryUrl(clip.url, 640)}" alt="${escapeHtml(clip.caption || 'Content Piece')}" width="400" height="220" loading="lazy" decoding="async" onerror="this.src='${CLOUDINARY_FALLBACK_IMG}'" style="width:100%; height:100%; object-fit:cover;" />
                     <span class="badge badge-teal" style="position:absolute; top:12px; ${isAr ? 'right:12px' : 'left:12px'}; z-index:2; backdrop-filter:blur(8px); background:rgba(0, 240, 255, 0.2); border:1px solid rgba(0, 240, 255, 0.4); color:#00f0ff;">
                       ${isAr ? 'قطعة محتوى معتمدة' : 'Piece of Content'}
                     </span>
@@ -2146,7 +2163,7 @@ async function loadPortalData() {
   if (titleInput) titleInput.value = currentUser.title || '';
   if (deptInput) deptInput.value = currentUser.department || 'Media Production';
   if (emailInput) emailInput.value = currentUser.email || '';
-  if (photoInput) photoInput.value = currentUser.photo || '/assets/Image_error.jpg';
+  if (photoInput) photoInput.value = currentUser.photo || 'https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg';
   if (bioInput) {
     bioInput.value = currentUser.bioEn || '';
     const counter = document.getElementById('portalBioCounter');
@@ -2247,7 +2264,7 @@ async function loadEmployeeWorks() {
           <tr style="background: rgba(14, 165, 233, 0.04);">
             <td>
               <div style="display:flex; align-items:center; gap:12px;">
-                <img src="${clip.url}" style="width:44px; height:44px; object-fit:cover; border-radius:var(--radius-xs); border:1px solid var(--border-default);" onerror="this.src='/assets/Image_error.jpg'">
+                <img src="${optimizeCloudinaryUrl(clip.url, 120)}" alt="${escapeHtml(clipTitle)}" width="44" height="44" loading="lazy" decoding="async" style="width:44px; height:44px; object-fit:cover; border-radius:var(--radius-xs); border:1px solid var(--border-default);" onerror="this.src='${CLOUDINARY_FALLBACK_IMG}'">
                 <div>
                   <strong>${clipTitle}</strong><br>
                   <span style="font-size:12px; color:var(--text-muted);">Piece of Content</span>
@@ -2336,7 +2353,7 @@ async function loadPortalApproveProjects() {
             ${gallery.length ? `
               <div style="display:flex; gap:8px; margin-top:12px; overflow-x:auto; padding-bottom:4px;">
                 ${gallery.map(m => `
-                  <img src="${escapeHtml(m.url)}" style="width:72px; height:50px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--border-default); cursor:pointer;" alt="${escapeHtml(m.caption || '')}" onclick="window.auroraOpenLightbox('${escapeHtml(m.url)}', '${escapeHtml(m.caption || p.titleEn)}')" />
+                  <img src="${escapeHtml(optimizeCloudinaryUrl(m.url, 200))}" width="72" height="50" loading="lazy" decoding="async" style="width:72px; height:50px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--border-default); cursor:pointer;" alt="${escapeHtml(m.caption || p.titleEn || 'Project media')}" onclick="window.auroraOpenLightbox('${escapeHtml(m.url)}', '${escapeHtml(m.caption || p.titleEn)}')" />
                 `).join('')}
               </div>
             ` : ''}
@@ -2459,7 +2476,7 @@ export async function saveEmployeeProfile(e) {
   const updates = {
     name: form.empName.value.trim(),
     title: form.empTitle.value.trim(),
-    photo: form.empPhoto.value.trim() || '/assets/Image_error.jpg',
+    photo: form.empPhoto.value.trim() || 'https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg',
     bioEn: form.empBio.value.trim()
   };
 
@@ -2581,7 +2598,7 @@ export function renderNewWorkPhotosGrid() {
 
   if (!newProjectPhotos.length) {
     grid.innerHTML = `<div style="grid-column: 1/-1; color: var(--text-muted); font-size: 0.85rem; padding: 12px; text-align: center;">No photos uploaded yet. Select up to 6 photos above.</div>`;
-    if (heroInput) heroInput.value = '/assets/Image_error.jpg';
+    if (heroInput) heroInput.value = 'https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg';
     return;
   }
 
@@ -2592,7 +2609,7 @@ export function renderNewWorkPhotosGrid() {
 
   grid.innerHTML = newProjectPhotos.map((photo, idx) => `
     <div class="photo-thumbnail-card ${photo.isHero ? 'is-hero' : ''}" style="position: relative; border-radius: var(--radius-sm); overflow: hidden; border: 2px solid ${photo.isHero ? 'var(--brand-electric-teal)' : 'var(--border-default)'};">
-      <img src="${photo.url}" style="width: 100%; height: 85px; object-fit: cover; display: block;" />
+      <img src="${photo.url}" alt="Selected project photo ${idx + 1}" width="140" height="85" loading="lazy" decoding="async" style="width: 100%; height: 85px; object-fit: cover; display: block;" />
       <button type="button" onclick="window.auroraRemoveProjectPhoto(${idx})" style="position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.7); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 11px; line-height: 1;">✕</button>
       <label style="display: flex; align-items: center; justify-content: center; gap: 4px; padding: 4px 6px; font-size: 0.75rem; background: var(--surface-sunken); cursor: pointer; margin: 0;">
         <input type="radio" name="heroPhotoRadio" value="${idx}" ${photo.isHero ? 'checked' : ''} onchange="window.auroraSetHeroPhoto(${idx})">
@@ -2788,7 +2805,7 @@ export async function submitNewWork(e) {
     solutionEn: form.solutionEn?.value.trim() || '',
     resultEn: form.resultEn?.value.trim() || '',
     youtubeId: parseYoutubeVideoId(form.youtubeId ? form.youtubeId.value.trim() : ''),
-    heroImage: heroPhoto.url || '/assets/Image_error.jpg',
+    heroImage: heroPhoto.url || 'https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg',
     deliverables: deliverables,
     creditedStaff: [currentUser ? currentUser.name : 'Omar Hassan'],
     mediaGallery: newProjectPhotos.map(p => ({
@@ -2864,7 +2881,7 @@ function renderContentPickerGrid(projects) {
 
   container.innerHTML = projects.map(p => {
     const clips = p.mediaGallery && p.mediaGallery.length ? p.mediaGallery : [
-      { type: 'photo', url: p.heroImage || '/assets/Image_error.jpg', caption: p.titleEn }
+      { type: 'photo', url: p.heroImage || 'https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg', caption: p.titleEn }
     ];
     return `
       <div class="content-picker-project" style="margin-bottom: 20px; padding: 16px; background: var(--surface-sunken); border-radius: var(--radius-sm); border: 1px solid var(--border-default);">
@@ -2879,7 +2896,7 @@ function renderContentPickerGrid(projects) {
             const safeCaption = (clip.caption || p.titleEn).replace(/'/g, "\\'");
             return `
               <div class="content-clip-card ${isChecked ? 'is-selected' : ''}" id="clip_card_${clipId}" style="position: relative; border-radius: var(--radius-sm); overflow: hidden; border: 2px solid ${isChecked ? 'var(--brand-electric-teal)' : 'var(--border-default)'}; cursor: pointer; transition: border-color 0.15s ease;" onclick="window.auroraToggleContentClip('${clipId}', '${p.id}', '${clip.url}', '${safeCaption}')">
-                <img src="${clip.url}" style="width: 100%; height: 90px; object-fit: cover; display: block;" onerror="this.src='/assets/Image_error.jpg'" />
+                <img src="${optimizeCloudinaryUrl(clip.url, 240)}" alt="${escapeHtml(clip.caption || 'Clip')}" width="150" height="90" loading="lazy" decoding="async" style="width: 100%; height: 90px; object-fit: cover; display: block;" onerror="this.src='${CLOUDINARY_FALLBACK_IMG}'" />
                 <div style="padding: 4px 6px; font-size: 0.75rem; background: var(--surface-raised); display: flex; align-items: center; justify-content: space-between;">
                   <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80px;">${clip.caption || 'Clip'}</span>
                   <input type="checkbox" id="clip_check_${clipId}" ${isChecked ? 'checked' : ''} style="pointer-events: none;">
@@ -4382,7 +4399,7 @@ async function loadAdminAwaitingReview() {
               ${gallery.length ? `
                 <div style="display:flex; gap:8px; margin-top:12px; overflow-x:auto; padding-bottom:4px;">
                   ${gallery.map(m => `
-                    <img src="${m.url}" style="width:72px; height:50px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--border-default); cursor:pointer;" alt="${m.caption || ''}" onclick="window.auroraOpenLightbox('${m.url}', '${m.caption || p.titleEn}')" />
+                    <img src="${optimizeCloudinaryUrl(m.url, 200)}" width="72" height="50" loading="lazy" decoding="async" style="width:72px; height:50px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--border-default); cursor:pointer;" alt="${escapeHtml(m.caption || p.titleEn || 'Project media')}" onclick="window.auroraOpenLightbox('${m.url}', '${m.caption || p.titleEn}')" />
                   `).join('')}
                 </div>
               ` : ''}
@@ -4561,7 +4578,7 @@ export async function submitEditProject(e) {
     industryCategory: document.getElementById('editProjectIndustrySelect').value,
     projectYear: Number(document.getElementById('editProjectYear').value) || 2026,
     youtubeId: parseYoutubeVideoId(document.getElementById('editProjectYoutube')?.value?.trim() || ''),
-    heroImage: document.getElementById('editProjectHeroImage').value.trim() || '/assets/Image_error.jpg',
+    heroImage: document.getElementById('editProjectHeroImage').value.trim() || 'https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg',
     summaryEn: document.getElementById('editProjectSummaryEn').value.trim(),
     challengeEn: document.getElementById('editProjectChallengeEn').value.trim(),
     solutionEn: document.getElementById('editProjectSolutionEn').value.trim(),
@@ -5770,7 +5787,7 @@ export function openLightbox(url, caption) {
   const img = document.getElementById('lightboxImg');
   const cap = document.getElementById('lightboxCaption');
   if (modal && img) {
-    img.src = url || '/assets/Image_error.jpg';
+    img.src = url || 'https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg';
     if (cap) cap.textContent = caption || '';
     modal.classList.add('active');
   }
@@ -5827,7 +5844,7 @@ function renderAdminMarqueeTable() {
       <td style="color:var(--text-muted); font-family:monospace; font-weight:700;">${idx + 1}</td>
       <td>
         <div style="width:70px; height:42px; background:var(--surface-sunken); border:1px solid var(--border-default); border-radius:4px; display:flex; align-items:center; justify-content:center; padding:4px;">
-          <img src="${escapeHtml(logo.src)}" alt="${escapeHtml(logo.name)}" style="max-height:100%; max-width:100%; object-fit:contain;" />
+          <img src="${escapeHtml(optimizeCloudinaryUrl(logo.src, 160))}" alt="${escapeHtml(logo.name)}" width="70" height="42" loading="lazy" decoding="async" style="max-height:100%; max-width:100%; object-fit:contain;" />
         </div>
       </td>
       <td>
@@ -5896,17 +5913,12 @@ export async function addNewMarqueeLogo() {
   reader.onload = async (e) => {
     try {
       const dataUrl = e.target.result;
-      const res = await api.authFetch('/api/content/upload-photo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dataUrl, filename: file.name })
-      });
-      const data = await res.json();
+      const data = await api.uploadCMSPhoto(dataUrl, file.name);
       if (data.success && data.url) {
         allAdminMarqueeData.logos.push({
           id: 'ml-' + Date.now(),
           name,
-          src: data.url
+          src: optimizeCloudinaryUrl(data.url, 224)
         });
         nameInput.value = '';
         fileInput.value = '';
@@ -5951,13 +5963,13 @@ export function renderPublicMarquee(data) {
   track.style.animationDuration = `${speed}s`;
 
   // Render Set 1 and Set 2 (for seamless endless loop)
-  const renderCards = (list) => list.map(l => `
-    <div class="client-logo-card">
-      <img src="${escapeHtml(l.src)}" alt="${escapeHtml(l.name)}" loading="lazy">
+  const renderCards = (list, isClone = false) => list.map(l => `
+    <div class="client-logo-card"${isClone ? ' aria-hidden="true"' : ''}>
+      <img src="${escapeHtml(optimizeCloudinaryUrl(l.src, 224))}" alt="${isClone ? '' : escapeHtml(l.name)}" width="56" height="56" loading="lazy" decoding="async">
     </div>
   `).join('');
 
-  track.innerHTML = renderCards(logos) + renderCards(logos);
+  track.innerHTML = renderCards(logos, false) + renderCards(logos, true);
 }
 
 // -----------------------------------------------------------------------------
@@ -6234,10 +6246,10 @@ async function loadAdminContentManager() {
 
         // 4-Photo Slider Editor
         cmsSliderPhotosData = c.about.sliderPhotos || [
-          { url: "/assets/Image_error.jpg", captionEn: "Commercial Production", captionAr: "إنتاج تجاري وسينمائي" },
-          { url: "/assets/Image_error.jpg", captionEn: "Cinema Lighting", captionAr: "إضاءة استوديو سينمائية" },
-          { url: "/assets/Image_error.jpg", captionEn: "DaVinci Hollywood Grade", captionAr: "تلوين سينمائي DaVinci" },
-          { url: "/assets/Image_error.jpg", captionEn: "Set Design & Art Direction", captionAr: "تصميم الديكور والإخراج الفني" }
+          { url: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg", captionEn: "Commercial Production", captionAr: "إنتاج تجاري وسينمائي" },
+          { url: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg", captionEn: "Cinema Lighting", captionAr: "إضاءة استوديو سينمائية" },
+          { url: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg", captionEn: "DaVinci Hollywood Grade", captionAr: "تلوين سينمائي DaVinci" },
+          { url: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg", captionEn: "Set Design & Art Direction", captionAr: "تصميم الديكور والإخراج الفني" }
         ];
 
         renderCMSAboutPhotoSlider();
@@ -6307,17 +6319,17 @@ export function renderPublicAboutSliderPhotos(photos) {
   const container = document.getElementById('aboutPhotoSlider');
   if (!container) return;
   const list = photos && photos.length ? photos : [
-    { url: "/assets/Image_error.jpg", captionEn: "Commercial Production", captionAr: "إنتاج تجاري وسينمائي" },
-    { url: "/assets/Image_error.jpg", captionEn: "Cinema Lighting", captionAr: "إضاءة استوديو سينمائية" },
-    { url: "/assets/Image_error.jpg", captionEn: "DaVinci Hollywood Grade", captionAr: "تلوين سينمائي DaVinci" },
-    { url: "/assets/Image_error.jpg", captionEn: "Set Design & Art Direction", captionAr: "تصميم الديكور والإخراج الفني" }
+    { url: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg", captionEn: "Commercial Production", captionAr: "إنتاج تجاري وسينمائي" },
+    { url: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg", captionEn: "Cinema Lighting", captionAr: "إضاءة استوديو سينمائية" },
+    { url: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg", captionEn: "DaVinci Hollywood Grade", captionAr: "تلوين سينمائي DaVinci" },
+    { url: "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg", captionEn: "Set Design & Art Direction", captionAr: "تصميم الديكور والإخراج الفني" }
   ];
   const isAr = getLanguage() === 'ar';
   container.innerHTML = list.map((photo, i) => {
     const caption = isAr && photo.captionAr ? photo.captionAr : photo.captionEn || '';
     return `
       <div class="photo-slider-item" style="cursor:default;" title="${escapeHtml(caption)}">
-        <img src="${escapeHtml(photo.url || '/assets/Image_error.jpg')}" alt="${escapeHtml(caption || 'BTS Still ' + (i + 1))}" loading="lazy">
+        <img src="${escapeHtml(optimizeCloudinaryUrl(photo.url, 720))}" alt="${escapeHtml(caption || 'BTS Still ' + (i + 1))}" width="360" height="270" loading="lazy" decoding="async">
         ${caption ? `<div style="position:absolute; bottom:0; left:0; right:0; padding:10px 14px; background:linear-gradient(transparent, rgba(10,15,51,0.88)); color:#FFFFFF; font-size:0.85rem; font-weight:600; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${escapeHtml(caption)}</div>` : ''}
       </div>
     `;
@@ -6369,7 +6381,7 @@ export function animateNumberCounters(container = document) {
 export function addAboutSliderPhoto() {
   if (!cmsSliderPhotosData) cmsSliderPhotosData = [];
   cmsSliderPhotosData.push({
-    url: '/assets/Image_error.jpg',
+    url: 'https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg',
     captionEn: 'BTS Production',
     captionAr: 'كواليس الإنتاج'
   });
@@ -6421,7 +6433,7 @@ function renderCMSAboutPhotoSlider() {
       </div>
       <div style="display:grid; grid-template-columns: 140px 1fr; gap:16px; align-items:start;">
         <div>
-          <img id="cms_preview_photo_${i}" src="${photo.url || '/assets/Image_error.jpg'}" style="width:140px; height:105px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--border-default);">
+          <img id="cms_preview_photo_${i}" src="${optimizeCloudinaryUrl(photo.url, 320)}" alt="${escapeHtml(photo.captionEn || 'Slider preview ' + (i + 1))}" width="140" height="105" loading="lazy" decoding="async" style="width:140px; height:105px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--border-default);">
           <div style="margin-top:6px;">
             <label class="form-label" style="font-size:11px; margin-bottom:2px;">Upload File</label>
             <input type="file" accept="image/*" class="form-input" style="padding:3px; font-size:11px;" onchange="window.auroraUploadSliderPhoto(${i}, this)">
@@ -6430,7 +6442,7 @@ function renderCMSAboutPhotoSlider() {
         <div>
           <div class="form-group" style="margin-bottom:8px;">
             <label class="form-label" style="font-size:12px;">Image URL</label>
-            <input type="text" class="form-input" id="cms_photo_${i}_url" value="${escapeHtml(photo.url || '')}" oninput="window.auroraUpdateAboutSliderPhotoField(${i}, 'url', this.value); document.getElementById('cms_preview_photo_${i}').src = this.value || '/assets/Image_error.jpg';" style="font-size:12px;">
+            <input type="text" class="form-input" id="cms_photo_${i}_url" value="${escapeHtml(photo.url || '')}" oninput="window.auroraUpdateAboutSliderPhotoField(${i}, 'url', this.value); document.getElementById('cms_preview_photo_${i}').src = this.value || 'https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg';" style="font-size:12px;">
           </div>
           <div class="grid grid-2" style="gap:8px;">
             <div>
@@ -6500,7 +6512,7 @@ export async function saveCMSContent() {
     const urlVal = document.getElementById(`cms_photo_${i}_url`)?.value.trim();
     const capEnVal = document.getElementById(`cms_photo_${i}_capEn`)?.value.trim();
     const capArVal = document.getElementById(`cms_photo_${i}_capAr`)?.value.trim();
-    if (urlVal !== undefined) photo.url = urlVal || '/assets/Image_error.jpg';
+    if (urlVal !== undefined) photo.url = urlVal || 'https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg';
     if (capEnVal !== undefined) photo.captionEn = capEnVal;
     if (capArVal !== undefined) photo.captionAr = capArVal;
   });

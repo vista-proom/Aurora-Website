@@ -341,7 +341,7 @@
     "solutionEn": "Testing V2Testing V2Testing V2Testing V2Testing V2Testing V2Testing V2Testing V2Testing V2Testing V2",
     "resultEn": "Testing V2Testing V2Testing V2Testing V2Testing V2",
     "youtubeId": "",
-    "heroImage": "/assets/Image_error.jpg",
+    "heroImage": "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
     "deliverables": [
       "Testing V2",
       "Testing V2",
@@ -353,7 +353,7 @@
     "mediaGallery": [
       {
         "type": "photo",
-        "url": "/assets/Image_error.jpg",
+        "url": "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
         "caption": "Stills"
       }
     ],
@@ -474,21 +474,21 @@
     "isApproved": true,
     "isPublished": true,
     "status": "published",
-    "heroImage": "/assets/Image_error.jpg",
+    "heroImage": "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
     "mediaGallery": [
       {
         "type": "photo",
-        "url": "/assets/Image_error.jpg",
+        "url": "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
         "caption": "Bottle composition & lighting"
       },
       {
         "type": "photo",
-        "url": "/assets/Image_error.jpg",
+        "url": "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
         "caption": "Color grade test DaVinci"
       },
       {
         "type": "photo",
-        "url": "/assets/Image_error.jpg",
+        "url": "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
         "caption": "Still frame highlight"
       }
     ],
@@ -532,16 +532,16 @@
     "isApproved": true,
     "isPublished": true,
     "status": "published",
-    "heroImage": "/assets/Image_error.jpg",
+    "heroImage": "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
     "mediaGallery": [
       {
         "type": "photo",
-        "url": "/assets/Image_error.jpg",
+        "url": "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
         "caption": "Clinic atmosphere"
       },
       {
         "type": "photo",
-        "url": "/assets/Image_error.jpg",
+        "url": "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
         "caption": "Consultation suite"
       }
     ],
@@ -586,16 +586,16 @@
     "isApproved": true,
     "isPublished": true,
     "status": "published",
-    "heroImage": "/assets/Image_error.jpg",
+    "heroImage": "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
     "mediaGallery": [
       {
         "type": "photo",
-        "url": "/assets/Image_error.jpg",
+        "url": "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
         "caption": "Training intensity"
       },
       {
         "type": "photo",
-        "url": "/assets/Image_error.jpg",
+        "url": "https://res.cloudinary.com/aurora-eg/image/upload/f_auto,q_auto,w_760/v1795891998/aurora/assets/Image_error_252d15.jpg",
         "caption": "Academy arena"
       }
     ],

@@ -294,8 +294,8 @@
 .hero-emblem-img {
   max-width: 280px;
   max-height: 280px;
-  width: auto;
-  height: auto;
+  width: 280px;
+  height: 280px;
   object-fit: contain;
   filter: drop-shadow(0 14px 38px rgba(106, 0, 244, 0.4));
   position: relative;

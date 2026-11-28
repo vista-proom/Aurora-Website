@@ -4766,13 +4766,16 @@ async function loadAdminUsers() {
           : '';
 
         const roleLabel = u.role === 'super_admin' ? 'Super Admin' : (u.role === 'manager' ? 'Manager' : 'Employee');
-        const roleBadgeColor = u.role === 'super_admin'
-          ? 'background:rgba(106,0,244,0.18); color:var(--brand-soft-lilac);'
-          : (u.role === 'manager' ? 'background:rgba(0,255,198,0.14); color:var(--brand-electric-teal);' : 'background:var(--surface-sunken); color:var(--text-secondary);');
+        const roleBadgeClass = u.role === 'super_admin'
+          ? 'badge badge-accent'
+          : (u.role === 'manager' ? 'badge badge-teal' : 'badge');
+        const roleBadgeStyle = u.role === 'employee'
+          ? 'background:var(--surface-sunken); color:var(--text-primary); border:1px solid var(--border-default); font-size:12px; padding:4px 10px; font-weight:700;'
+          : 'font-size:12px; padding:4px 10px; font-weight:700;';
 
         const activeSections = STAFF_PERM_SECTIONS
           .filter(sec => Boolean(p[sec.tabPerm.key]) || sec.subs.some(sub => Boolean(p[sub.key])))
-          .map(sec => `<span class="badge" style="background:rgba(0,255,198,0.12); color:var(--brand-electric-teal); font-size:11px; padding:2px 7px;">${sec.title}</span>`)
+          .map(sec => `<span class="badge badge-teal" style="font-size:11px; padding:3px 8px; font-weight:700;">${sec.title}</span>`)
           .join('');
 
         return `
@@ -4783,7 +4786,7 @@ async function loadAdminUsers() {
             </td>
             <td><code>${escapeHtml(u.email)}</code></td>
             <td>
-              <span class="badge" style="${roleBadgeColor} font-size:12px; padding:4px 10px; font-weight:700;">${roleLabel}</span>
+              <span class="${roleBadgeClass}" style="${roleBadgeStyle}">${roleLabel}</span>
             </td>
             <td>
               <div style="display:flex; flex-wrap:wrap; gap:4px; max-width:300px;">

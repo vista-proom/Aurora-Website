@@ -1305,6 +1305,52 @@ class DataStoreV2 {
     }
   }
 
+  replaceUsers(usersList) {
+    if (!Array.isArray(usersList) || !usersList.length) return;
+    const existing = this.read(this.usersFile) || [];
+    const pwByEmail = new Map();
+    existing.forEach(u => {
+      if (u && u.email && u.password) pwByEmail.set(u.email.toLowerCase(), u.password);
+    });
+    const merged = usersList.map(u => {
+      if (!u || !u.email) return u;
+      const pw = u.password || pwByEmail.get(u.email.toLowerCase()) || '';
+      return pw ? { ...u, password: pw } : u;
+    });
+    this.write(this.usersFile, merged);
+  }
+
+  replaceIndustries(industriesList) {
+    if (Array.isArray(industriesList) && industriesList.length > 0) {
+      this.write(this.industriesFile, industriesList);
+    }
+  }
+
+  replaceServices(servicesList) {
+    if (Array.isArray(servicesList) && servicesList.length > 0) {
+      this.write(this.servicesFile, servicesList);
+    }
+  }
+
+  replaceMarquee(marqueeData) {
+    if (marqueeData && typeof marqueeData === 'object' && Array.isArray(marqueeData.logos)) {
+      this.write(this.marqueeFile, marqueeData);
+    }
+  }
+
+  replaceSettings(settingsData) {
+    if (settingsData && typeof settingsData === 'object') {
+      const current = this.read(this.settingsFile) || {};
+      this.write(this.settingsFile, { ...current, ...settingsData });
+    }
+  }
+
+  replaceActivityLogs(logsList) {
+    if (Array.isArray(logsList) && logsList.length > 0) {
+      this.write(this.activityLogFile, logsList);
+    }
+  }
+
   updateSiteContent(updates, actorEmail) {
     const current = this.read(this.contentFile) || {};
     // Deep merge page keys

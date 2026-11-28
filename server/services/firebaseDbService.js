@@ -108,7 +108,27 @@ class FirebaseDbService {
   // REAL-TIME SYNC METHODS
   // ---------------------------------------------------------------------------
 
+  async fetchCollectionFromFirestore(collectionName) {
+    if (!this.isConnected || !this.firestore) {
+      await this.init();
+    }
+    if (!this.firestore) return null;
+    try {
+      const snap = await this.firestore.collection(collectionName).get();
+      if (snap.empty) return null;
+      return snap.docs.map(d => d.data());
+    } catch (e) {
+      console.warn(`[Firestore Fetch ${collectionName} Warning]:`, e.message);
+      return null;
+    }
+  }
+
   async fetchBriefs() {
+    const fsList = await this.fetchCollectionFromFirestore('briefs');
+    if (fsList && fsList.length) {
+      fsList.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      return fsList;
+    }
     if (!this.isConnected || !this.db) {
       await this.init();
     }
@@ -206,6 +226,11 @@ class FirebaseDbService {
   }
 
   async fetchProjects() {
+    const fsList = await this.fetchCollectionFromFirestore('projects');
+    if (fsList && fsList.length) {
+      fsList.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      return fsList;
+    }
     if (!this.isConnected || !this.db) {
       await this.init();
     }
@@ -285,12 +310,103 @@ class FirebaseDbService {
   }
 
   async syncServices(services) {
+    if (!this.isConnected || !this.db) {
+      await this.init();
+    }
     if (!this.isConnected || !this.db) return;
     try {
       await this.db.ref('services').set(services);
+      await this.syncCollectionToFirestore('services', services || [], s => s.id);
     } catch (e) {
       console.warn('[Firebase DB Sync Services Error]:', e.message);
     }
+  }
+
+  async fetchServices() {
+    const fsList = await this.fetchCollectionFromFirestore('services');
+    if (fsList && fsList.length) {
+      fsList.sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+      return fsList;
+    }
+    return null;
+  }
+
+  async syncMarquee(marquee) {
+    if (!this.isConnected || !this.db) {
+      await this.init();
+    }
+    if (!this.isConnected || !this.db) return;
+    try {
+      await this.db.ref('marquee').set(marquee);
+      if (this.firestore && marquee) {
+        await this.firestore.collection('site_content').doc('marquee').set(JSON.parse(JSON.stringify(marquee)));
+      }
+    } catch (e) {
+      console.warn('[Firebase DB Sync Marquee Error]:', e.message);
+    }
+  }
+
+  async fetchMarquee() {
+    if (!this.isConnected || !this.firestore) await this.init();
+    if (this.firestore) {
+      try {
+        const doc = await this.firestore.collection('site_content').doc('marquee').get();
+        if (doc.exists) return doc.data();
+      } catch (e) {
+        console.warn('[Firestore Fetch Marquee Warning]:', e.message);
+      }
+    }
+    return null;
+  }
+
+  async syncSettings(settings) {
+    if (!this.isConnected || !this.db) await this.init();
+    if (!this.firestore || !settings) return;
+    try {
+      const { firebasePrivateKey, googlePrivateKey, ...safe } = settings;
+      await this.firestore.collection('site_content').doc('settings').set(JSON.parse(JSON.stringify(safe)));
+    } catch (e) {
+      console.warn('[Firestore Sync Settings Warning]:', e.message);
+    }
+  }
+
+  async fetchSettings() {
+    if (!this.isConnected || !this.firestore) await this.init();
+    if (this.firestore) {
+      try {
+        const doc = await this.firestore.collection('site_content').doc('settings').get();
+        if (doc.exists) return doc.data();
+      } catch (e) {
+        console.warn('[Firestore Fetch Settings Warning]:', e.message);
+      }
+    }
+    return null;
+  }
+
+  async fetchUsers() {
+    return await this.fetchCollectionFromFirestore('users');
+  }
+
+  async fetchIndustries() {
+    if (!this.isConnected || !this.firestore) await this.init();
+    if (this.firestore) {
+      try {
+        const doc = await this.firestore.collection('industries').doc('tags').get();
+        if (doc.exists && Array.isArray(doc.data()?.tags)) return doc.data().tags;
+      } catch (e) {
+        console.warn('[Firestore Fetch Industries Warning]:', e.message);
+      }
+    }
+    return null;
+  }
+
+  async fetchActivityLogs() {
+    const fsList = await this.fetchCollectionFromFirestore('activity_logs');
+    if (fsList && fsList.length) {
+      fsList.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+      return fsList;
+    }
+    return null;
   }
 
   async syncSiteContent(content) {
@@ -309,8 +425,16 @@ class FirebaseDbService {
   }
 
   async fetchSiteContent() {
-    if (!this.isConnected || !this.db) {
+    if (!this.isConnected || !this.firestore) {
       await this.init();
+    }
+    if (this.firestore) {
+      try {
+        const doc = await this.firestore.collection('site_content').doc('main').get();
+        if (doc.exists) return doc.data();
+      } catch (e) {
+        console.warn('[Firestore Fetch SiteContent Warning]:', e.message);
+      }
     }
     if (!this.isConnected || !this.db) return null;
     try {
@@ -352,6 +476,11 @@ class FirebaseDbService {
   }
 
   async fetchInquiries() {
+    const fsList = await this.fetchCollectionFromFirestore('inquiries');
+    if (fsList && fsList.length) {
+      fsList.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      return fsList;
+    }
     if (!this.isConnected || !this.db) {
       await this.init();
     }
@@ -387,6 +516,11 @@ class FirebaseDbService {
   }
 
   async fetchInvoices() {
+    const fsList = await this.fetchCollectionFromFirestore('invoices');
+    if (fsList && fsList.length) {
+      fsList.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      return fsList;
+    }
     if (!this.isConnected || !this.db) {
       await this.init();
     }

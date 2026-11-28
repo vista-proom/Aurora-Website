@@ -46,5 +46,6 @@ Desktop.ini
 *.swp
 *.swo
 
-# User Uploads Cache
+# User Uploads Cache & Runtime DataStore Cache (Structured data lives in Cloud Firestore)
 upload/
+server/data/*.json

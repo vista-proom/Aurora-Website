@@ -175,6 +175,32 @@ app.use((req, res, next) => {
   next();
 });
 
+// Cloud Firestore Hydration Middleware for Structured Collections
+let lastCoreFirestoreSyncTs = 0;
+app.use('/api', async (req, res, next) => {
+  if (Date.now() - lastCoreFirestoreSyncTs < 8000) return next();
+  lastCoreFirestoreSyncTs = Date.now();
+  try {
+    const [users, settings, industries, services, marquee, logs] = await Promise.all([
+      firebaseDbService.fetchUsers(),
+      firebaseDbService.fetchSettings(),
+      firebaseDbService.fetchIndustries(),
+      firebaseDbService.fetchServices(),
+      firebaseDbService.fetchMarquee(),
+      firebaseDbService.fetchActivityLogs()
+    ]);
+    if (users && users.length) store.replaceUsers(users);
+    if (settings) store.replaceSettings(settings);
+    if (industries && industries.length) store.replaceIndustries(industries);
+    if (services && services.length) store.replaceServices(services);
+    if (marquee) store.replaceMarquee(marquee);
+    if (logs && logs.length) store.replaceActivityLogs(logs);
+  } catch (e) {
+    console.warn('[Firestore Core Hydrate Warning]:', e.message);
+  }
+  next();
+});
+
 // -----------------------------------------------------------------------------
 // 2. TRAFFIC CONTROLS & RATE LIMITERS
 // -----------------------------------------------------------------------------
@@ -877,41 +903,61 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.json({ success: true, data: all ? services : services.filter(s => s.active) });
   });
 
-  app.post('/api/services', requireAuth(['super_admin']), (req, res) => {
+  app.post('/api/services', requireAuth(['super_admin']), async (req, res) => {
     const newService = store.addService(req.body, req.authUser.email);
+    await Promise.allSettled([
+      firebaseDbService.syncServices(store.getServices()),
+      firebaseDbService.syncActivityLogs(store.getActivityLogs())
+    ]);
     res.status(201).json({ success: true, message: 'Service added successfully', data: newService });
   });
 
-  app.put('/api/services/:id', requireAuth(['super_admin']), (req, res) => {
+  app.put('/api/services/:id', requireAuth(['super_admin']), async (req, res) => {
     const updated = store.updateService(req.params.id, req.body, req.authUser.email);
     if (!updated) {
       return res.status(404).json({ success: false, error: 'Service not found' });
     }
+    await Promise.allSettled([
+      firebaseDbService.syncServices(store.getServices()),
+      firebaseDbService.syncActivityLogs(store.getActivityLogs())
+    ]);
     res.json({ success: true, message: 'Service updated successfully', data: updated });
   });
 
-  app.delete('/api/services/:id', requireAuth(['super_admin']), (req, res) => {
+  app.delete('/api/services/:id', requireAuth(['super_admin']), async (req, res) => {
     const deleted = store.deleteService(req.params.id, req.authUser.email);
     if (!deleted) {
       return res.status(404).json({ success: false, error: 'Service not found' });
     }
+    await Promise.allSettled([
+      firebaseDbService.syncServices(store.getServices()),
+      firebaseDbService.syncActivityLogs(store.getActivityLogs())
+    ]);
     res.json({ success: true, message: 'Service deleted successfully' });
   });
 
-  app.post('/api/services/reorder', requireAuth(['super_admin']), (req, res) => {
+  app.post('/api/services/reorder', requireAuth(['super_admin']), async (req, res) => {
     const { ids } = req.body;
     if (!Array.isArray(ids)) {
       return res.status(400).json({ success: false, error: 'Array of ids required' });
     }
     const reordered = store.reorderServices(ids, req.authUser.email);
+    await Promise.allSettled([
+      firebaseDbService.syncServices(reordered),
+      firebaseDbService.syncActivityLogs(store.getActivityLogs())
+    ]);
     res.json({ success: true, message: 'Services reordered successfully', data: reordered });
   });
 
-  app.patch('/api/services/:id/toggle', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.patch('/api/services/:id/toggle', requireAuth(['super_admin', 'manager']), async (req, res) => {
     const updated = store.toggleService(req.params.id, req.body.active, req.authUser.email);
     if (!updated) {
       return res.status(404).json({ success: false, error: 'Service not found' });
     }
+    await Promise.allSettled([
+      firebaseDbService.syncServices(store.getServices()),
+      firebaseDbService.syncActivityLogs(store.getActivityLogs())
+    ]);
     res.json({ success: true, data: updated });
   });
 
@@ -1419,6 +1465,10 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
 
   const handleSettingsUpdate = async (req, res) => {
     const updated = store.updateSettings(req.body, req.authUser.email);
+    await Promise.allSettled([
+      firebaseDbService.syncSettings(updated),
+      firebaseDbService.syncActivityLogs(store.getActivityLogs())
+    ]);
 
     if (req.body.mongodbUri) {
       await dbService.connect(req.body.mongodbUri);
@@ -1550,8 +1600,12 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.json({ success: true, data: store.getMarquee() });
   });
 
-  app.put('/api/content/marquee', requireAuth(['super_admin', 'manager'], ['canViewPartnerLogos']), (req, res) => {
+  app.put('/api/content/marquee', requireAuth(['super_admin', 'manager'], ['canViewPartnerLogos']), async (req, res) => {
     const updated = store.saveMarquee(req.body, req.authUser.email);
+    await Promise.allSettled([
+      firebaseDbService.syncMarquee(updated),
+      firebaseDbService.syncActivityLogs(store.getActivityLogs())
+    ]);
     res.json({ success: true, message: 'Partner logos marquee updated and published', data: updated });
   });
 

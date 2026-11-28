@@ -4796,7 +4796,7 @@ async function loadAdminUsers() {
             <td>
               <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                 ${hasAdminPerm('canEditStaff') ? `<button type="button" class="btn btn-sm btn-secondary" style="font-size:0.78rem; padding:4px 8px; white-space:nowrap;" onclick="window.auroraOpenEditStaffModal('${u.id}')" title="Edit staff details & permissions">✏️ Edit</button>` : ''}
-                ${hasAdminPerm('canResetStaffPassword') ? `<button type="button" class="btn btn-sm btn-secondary" style="color:var(--brand-electric-teal); border-color:rgba(0,255,192,0.3); font-size:0.78rem; padding:4px 8px; white-space:nowrap;" onclick="window.auroraExpireAndResetStaffPassword('${u.id}', '${u.email}', '${u.name}')" title="Expire old password & trigger reset email">🔑 Reset Pass</button>` : ''}
+                ${hasAdminPerm('canResetStaffPassword') ? `<button type="button" class="btn btn-sm btn-secondary" style="color:var(--text-primary); border-color:var(--border-default); font-size:0.78rem; padding:4px 8px; white-space:nowrap;" onclick="window.auroraExpireAndResetStaffPassword('${u.id}', '${u.email}', '${u.name}')" title="Expire old password & trigger reset email">🔑 Reset Pass</button>` : ''}
                 ${isMasterAdmin ? '<span style="font-size:11px; color:var(--text-muted); margin-left:4px;">Protected</span>' : (hasAdminPerm('canDeleteStaff') ? `
                   <button type="button" class="btn btn-sm btn-secondary" style="color:var(--status-error); border-color:rgba(255,71,87,0.3); font-size:0.78rem; padding:4px 8px;" onclick="window.auroraDeleteStaff('${u.id}', '${u.name}')" title="Revoke access & delete from portal and Firebase">🗑️ Delete</button>
                 ` : '')}

@@ -469,6 +469,10 @@
   margin-top: auto;
 }
 
+.site-footer p {
+  color: var(--text-on-band-muted);
+}
+
 .footer-grid {
   display: grid;
   grid-template-columns: 2fr 1fr 1.2fr 1.8fr;

@@ -178,6 +178,12 @@
     @media (max-width:600px) { .hero-section { padding:64px 0; } .hero-logo-frame { width:210px; height:210px; } .hero-emblem-img { width:180px; height:180px; max-width:180px; max-height:180px; } }
     .drawer-overlay, .modal-overlay { opacity:0; visibility:hidden; position:fixed; inset:0; }
     .drawer-panel { position:fixed; top:0; right:-100%; visibility:hidden; }
+    .brands-strip, .brands-strip-fullwidth { width:100%; padding:32px 0 36px 0; background:var(--surface-sunken); border-top:1px solid var(--border-default); border-bottom:1px solid var(--border-default); overflow:hidden; display:block; }
+    .brands-title { text-align:center; font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--text-muted); margin-bottom:22px; display:block; }
+    .marquee-container { display:flex; overflow:hidden; width:100%; }
+    .marquee-track { display:flex; align-items:center; gap:20px; flex-shrink:0; width:max-content; padding:4px 10px; }
+    .client-logo-card { padding:0 12px; height:72px; min-width:160px; max-width:210px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .client-logo-card img { max-height:56px; max-width:170px; width:auto; height:auto; object-fit:contain; }
   </style>
 
   <!-- Non-Blocking Modular Semantic CSS Architecture -->
@@ -259,7 +265,7 @@
       <!-- Header Controls & CTA -->
       <div class="header-actions">
         <!-- Language Switcher -->
-        <button type="button" class="control-btn" id="langToggleBtn" aria-label="Switch Language">
+        <button type="button" class="control-btn" id="langToggleBtn" title="Switch Language">
           <span id="langToggleLabel">عربي</span>
         </button>
 

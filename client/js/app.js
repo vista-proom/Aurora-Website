@@ -3386,7 +3386,8 @@ export async function openBriefAnswers(token) {
   }
 
   const d = brief.data;
-  const generatorName = brief.generatedBy || currentUser?.name || 'Manager';
+  const matchedCreator = (allAdminUsers || []).find(u => u.email && brief.createdBy && u.email.toLowerCase() === brief.createdBy.toLowerCase());
+  const generatorName = brief.createdByName || brief.generatedBy || matchedCreator?.name || brief.createdBy || 'Aurora Team';
   const subDate = brief.submittedAt ? new Date(brief.submittedAt).toLocaleDateString() : new Date().toLocaleDateString();
 
   const clientNameEl = document.getElementById('printBriefClientName');
@@ -3791,13 +3792,19 @@ export function renderAdminInvoicesTable(invoices) {
     return;
   }
 
+  const canEditInv = !currentUser || currentUser.role === 'super_admin' || currentUser.role === 'manager' || Boolean(currentUser?.permissions?.canCreateInvoices);
+
   tbody.innerHTML = invoices.map(inv => {
     const isQuotation = (inv.type || 'quotation').toLowerCase() === 'quotation';
     const typeBadge = isQuotation 
       ? `<span class="badge badge-accent">QUOTATION</span>`
       : `<span class="badge badge-teal">INVOICE</span>`;
 
-    const statusClass = (inv.status || 'Draft').toLowerCase();
+    const rawStatus = inv.status || 'Draft';
+    const statusClass = rawStatus.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const statusStyle = rawStatus === '50% Paid'
+      ? 'background:rgba(245,158,11,0.16); color:#f59e0b; border:1px solid rgba(245,158,11,0.35);'
+      : '';
     const formattedTotal = Number(inv.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     return `
@@ -3810,15 +3817,90 @@ export function renderAdminInvoicesTable(invoices) {
         </td>
         <td style="white-space:nowrap;">${inv.issueDate || '—'}</td>
         <td style="white-space:nowrap; font-weight:800; color:var(--timeline-accent);">${formattedTotal} ${inv.currency || 'EGP'}</td>
-        <td><span class="status-pill status-${statusClass}">${inv.status || 'Draft'}</span></td>
+        <td><span class="status-pill status-${statusClass}" style="${statusStyle}">${rawStatus}</span></td>
         <td style="white-space:nowrap;">
           <button class="btn btn-sm btn-primary" onclick="window.auroraViewInvoicePrint('${inv.id}')" title="View & Print">🖨️ View / Print</button>
-          <button class="btn btn-sm btn-outline" onclick="window.auroraOpenCreateInvoiceModal('${inv.id}')" title="Edit">✏️</button>
-          <button class="btn btn-sm btn-secondary" style="color:var(--status-error);" onclick="window.auroraDeleteInvoice('${inv.id}')" title="Delete">🗑️</button>
+          <button class="btn btn-sm btn-secondary" onclick="window.auroraOpenInvoiceHistory('${inv.id}')" title="View Status History">📜 History</button>
+          ${canEditInv ? `
+            <button class="btn btn-sm btn-secondary" onclick="window.auroraOpenUpdateInvoiceStatus('${inv.id}')" title="Update Status">🔄 Status</button>
+            <button class="btn btn-sm btn-outline" onclick="window.auroraOpenCreateInvoiceModal('${inv.id}')" title="Edit">✏️</button>
+            <button class="btn btn-sm btn-secondary" style="color:var(--status-error);" onclick="window.auroraDeleteInvoice('${inv.id}')" title="Delete">🗑️</button>
+          ` : ''}
         </td>
       </tr>
     `;
   }).join('');
+}
+
+export function openUpdateInvoiceStatusModal(id) {
+  const inv = allAdminInvoices.find(i => i.id === id);
+  if (!inv) return;
+  document.getElementById('statusUpdateInvoiceId').value = inv.id;
+  document.getElementById('statusUpdateDocLabel').textContent = `${inv.number} — ${inv.clientName || 'Client'} (${inv.status || 'Draft'})`;
+  document.getElementById('statusUpdateSelect').value = inv.status || 'Draft';
+  document.getElementById('statusUpdateAmountPaid').value = '';
+  document.getElementById('statusUpdateNote').value = '';
+  document.getElementById('updateInvoiceStatusModal')?.classList.add('active');
+}
+
+export async function submitInvoiceStatusUpdate(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const id = document.getElementById('statusUpdateInvoiceId')?.value;
+  const status = document.getElementById('statusUpdateSelect')?.value;
+  const amountPaid = document.getElementById('statusUpdateAmountPaid')?.value.trim() || '';
+  const note = document.getElementById('statusUpdateNote')?.value.trim() || '';
+  if (!id || !status || !note) {
+    alert('Please select a status and enter update details.');
+    return;
+  }
+
+  const btn = document.getElementById('statusUpdateSubmitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+  try {
+    const res = await api.updateInvoiceStatus(id, status, note, amountPaid);
+    if (res && res.success) {
+      showToastNotification(`Status updated to "${status}".`, 'success');
+      closeAllModalsAndDrawers();
+      await loadAdminInvoices();
+    } else {
+      alert(res?.error || 'Failed to update status.');
+    }
+  } catch (err) {
+    alert('Network error: ' + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Status Update'; }
+  }
+}
+
+export function openInvoiceHistoryModal(id) {
+  const inv = allAdminInvoices.find(i => i.id === id);
+  if (!inv) return;
+  const label = document.getElementById('invoiceHistoryDocLabel');
+  if (label) label.textContent = `${inv.number} · ${inv.clientName || 'Client'}${inv.brandName ? ' (' + inv.brandName + ')' : ''}`;
+
+  const body = document.getElementById('invoiceStatusHistoryBody');
+  const history = Array.isArray(inv.statusHistory) ? inv.statusHistory : [];
+  if (body) {
+    if (!history.length) {
+      body.innerHTML = `<div style="padding:20px; text-align:center; color:var(--text-muted); background:var(--surface-sunken); border-radius:var(--radius-sm);">No status update history recorded yet for this document.</div>`;
+    } else {
+      body.innerHTML = history.map(h => `
+        <div style="background:var(--surface-sunken); border:1px solid var(--border-default); border-radius:var(--radius-sm); padding:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:6px;">
+            <div style="font-weight:700; font-size:0.92rem; color:var(--text-primary);">
+              ${h.fromStatus ? `<span style="color:var(--text-muted);">${escapeHtml(h.fromStatus)}</span> → ` : ''}<span style="color:var(--brand-electric-teal);">${escapeHtml(h.toStatus)}</span>
+            </div>
+            <span style="font-size:0.78rem; color:var(--text-muted);">${h.updatedAt ? new Date(h.updatedAt).toLocaleString() : '—'}</span>
+          </div>
+          ${h.amountPaid ? `<div style="font-size:0.84rem; color:var(--text-primary); margin-bottom:4px;"><strong>Payment / Ref:</strong> ${escapeHtml(h.amountPaid)}</div>` : ''}
+          <div style="font-size:0.86rem; color:var(--text-secondary); line-height:1.45;">${escapeHtml(h.note || '—')}</div>
+          <div style="font-size:0.76rem; color:var(--text-muted); margin-top:6px;">Updated by: <strong>${escapeHtml(h.updatedBy || 'Staff')}</strong></div>
+        </div>
+      `).join('');
+    }
+  }
+  document.getElementById('invoiceStatusHistoryModal')?.classList.add('active');
 }
 
 export function filterInvoices() {
@@ -4028,11 +4110,24 @@ export async function saveInvoice(e) {
   const { subtotal, discount, vat, grandTotal } = calcInvoiceTotals();
   const applyVat = document.getElementById('invoiceApplyVatInput')?.checked;
 
+  let statusNote = '';
+  if (id) {
+    const existing = allAdminInvoices.find(i => i.id === id);
+    if (existing && existing.status !== status) {
+      statusNote = prompt(`Status changed from "${existing.status}" to "${status}". Please enter required update details/notes:`) || '';
+      if (!statusNote.trim()) {
+        alert('Update details/notes are required when changing the document status.');
+        return;
+      }
+    }
+  }
+
   const payload = {
     id,
     number,
     type,
     status,
+    statusNote,
     issueDate,
     dueDate,
     clientName,
@@ -4434,6 +4529,33 @@ export async function withdrawProject(id) {
 
 // 5. Staff Users & Permissions (Super Admin Only)
 let allAdminUsers = [];
+const STAFF_PERM_DEFS = [
+  { key: 'canApproveProjects', label: 'Approve Projects' },
+  { key: 'canPublishProjects', label: 'Publish Live' },
+  { key: 'canViewBriefs', label: 'View KYC' },
+  { key: 'canGenerateBriefs', label: 'Generate KYC' },
+  { key: 'canViewCRM', label: 'CRM Access' },
+  { key: 'canViewInvoices', label: 'Quotations & Invoices Tab' },
+  { key: 'canCreateInvoices', label: 'Generate Quotation/Invoice' }
+];
+
+export function toggleStaffAdvanced(mode) {
+  const box = document.getElementById(mode === 'add' ? 'addStaffAdvancedBox' : 'editStaffAdvancedBox');
+  const arrow = document.getElementById(mode === 'add' ? 'addStaffAdvancedArrow' : 'editStaffAdvancedArrow');
+  if (!box) return;
+  const isOpen = box.style.display !== 'none';
+  box.style.display = isOpen ? 'none' : 'block';
+  if (arrow) arrow.textContent = isOpen ? '▼' : '▲';
+}
+
+function collectModalPermissions(prefix) {
+  const perms = {};
+  STAFF_PERM_DEFS.forEach(def => {
+    const el = document.getElementById(`${prefix}_${def.key}`);
+    if (el) perms[def.key] = Boolean(el.checked);
+  });
+  return perms;
+}
 
 async function loadAdminUsers() {
   const tbody = document.getElementById('adminUsersTableBody');
@@ -4450,6 +4572,11 @@ async function loadAdminUsers() {
           ? `<span class="badge" style="background:rgba(255,154,0,0.15); color:#ff9a00; font-size:10px; padding:2px 6px; margin-left:6px;" title="User is required to change password on next sign-in">🔒 Pass Change Req.</span>`
           : '';
 
+        const activePermBadges = STAFF_PERM_DEFS
+          .filter(def => Boolean(p[def.key]))
+          .map(def => `<span class="badge" style="background:rgba(0,255,198,0.12); color:var(--brand-electric-teal); font-size:11px; padding:2px 7px;">${def.label}</span>`)
+          .join('');
+
         return `
           <tr>
             <td>
@@ -4464,14 +4591,14 @@ async function loadAdminUsers() {
                 <option value="super_admin" ${u.role === 'super_admin' ? 'selected' : ''}>Super Admin</option>
               </select>
             </td>
-            <td><input type="checkbox" ${p.canApproveProjects ? 'checked' : ''} onchange="window.auroraTogglePerm('${u.id}', 'canApproveProjects', this.checked)"></td>
-            <td><input type="checkbox" ${p.canPublishProjects ? 'checked' : ''} onchange="window.auroraTogglePerm('${u.id}', 'canPublishProjects', this.checked)"></td>
-            <td><input type="checkbox" ${p.canViewBriefs ? 'checked' : ''} onchange="window.auroraTogglePerm('${u.id}', 'canViewBriefs', this.checked)"></td>
-            <td><input type="checkbox" ${p.canGenerateBriefs ? 'checked' : ''} onchange="window.auroraTogglePerm('${u.id}', 'canGenerateBriefs', this.checked)"></td>
-            <td><input type="checkbox" ${p.canViewCRM ? 'checked' : ''} onchange="window.auroraTogglePerm('${u.id}', 'canViewCRM', this.checked)"></td>
+            <td>
+              <div style="display:flex; flex-wrap:wrap; gap:4px; max-width:300px;">
+                ${activePermBadges || '<span style="font-size:12px; color:var(--text-muted);">Standard Access Only</span>'}
+              </div>
+            </td>
             <td>
               <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-                <button type="button" class="btn btn-sm btn-secondary" style="font-size:0.78rem; padding:4px 8px; white-space:nowrap;" onclick="window.auroraOpenEditStaffModal('${u.id}')" title="Edit staff details & sync to Firebase">✏️ Edit</button>
+                <button type="button" class="btn btn-sm btn-secondary" style="font-size:0.78rem; padding:4px 8px; white-space:nowrap;" onclick="window.auroraOpenEditStaffModal('${u.id}')" title="Edit staff details & permissions">✏️ Edit</button>
                 <button type="button" class="btn btn-sm btn-secondary" style="color:var(--brand-electric-teal); border-color:rgba(0,255,192,0.3); font-size:0.78rem; padding:4px 8px; white-space:nowrap;" onclick="window.auroraExpireAndResetStaffPassword('${u.id}', '${u.email}', '${u.name}')" title="Expire old password & trigger reset email">🔑 Reset Pass</button>
                 ${isMasterAdmin ? '<span style="font-size:11px; color:var(--text-muted); margin-left:4px;">Protected</span>' : `
                   <button type="button" class="btn btn-sm btn-secondary" style="color:var(--status-error); border-color:rgba(255,71,87,0.3); font-size:0.78rem; padding:4px 8px;" onclick="window.auroraDeleteStaff('${u.id}', '${u.name}')" title="Revoke access & delete from portal and Firebase">🗑️ Delete</button>
@@ -4533,6 +4660,14 @@ export function openAddStaffModal() {
     if (form) form.reset();
     const toggle = document.getElementById('newStaffMustChangePassword');
     if (toggle) toggle.checked = true;
+    STAFF_PERM_DEFS.forEach(def => {
+      const el = document.getElementById(`addPerm_${def.key}`);
+      if (el) el.checked = false;
+    });
+    const advBox = document.getElementById('addStaffAdvancedBox');
+    const advArrow = document.getElementById('addStaffAdvancedArrow');
+    if (advBox) advBox.style.display = 'none';
+    if (advArrow) advArrow.textContent = '▼';
     modal.classList.add('active');
   }
 }
@@ -4549,6 +4684,7 @@ export async function submitAddStaff(e) {
   const title = form.staffTitle.value.trim();
   const mustChangeEl = document.getElementById('newStaffMustChangePassword');
   const mustChangePassword = mustChangeEl ? mustChangeEl.checked : true;
+  const permissions = collectModalPermissions('addPerm');
 
   if (!name || !email) {
     alert('Please enter both name and email address.');
@@ -4562,7 +4698,8 @@ export async function submitAddStaff(e) {
       role,
       department,
       title,
-      mustChangePassword
+      mustChangePassword,
+      permissions
     });
     if (res.success) {
       const defPw = res.defaultPassword || 'Aurora@2026';
@@ -4604,6 +4741,16 @@ export function openEditStaffModal(userId) {
   const roleSelect = document.getElementById('editStaffRole');
   if (roleSelect) roleSelect.disabled = isMasterAdmin;
 
+  const perms = u.permissions || {};
+  STAFF_PERM_DEFS.forEach(def => {
+    const el = document.getElementById(`editPerm_${def.key}`);
+    if (el) el.checked = Boolean(perms[def.key]);
+  });
+  const advBox = document.getElementById('editStaffAdvancedBox');
+  const advArrow = document.getElementById('editStaffAdvancedArrow');
+  if (advBox) advBox.style.display = 'none';
+  if (advArrow) advArrow.textContent = '▼';
+
   modal.classList.add('active');
 }
 
@@ -4618,6 +4765,7 @@ export async function submitEditStaff(e) {
   const department = document.getElementById('editStaffDepartment')?.value?.trim();
   const title = document.getElementById('editStaffTitle')?.value?.trim();
   const mustChangePassword = Boolean(document.getElementById('editStaffMustChangePassword')?.checked);
+  const permissions = collectModalPermissions('editPerm');
 
   if (!name || !email) {
     showToastNotification('Name and email are required.', 'warning');
@@ -4637,7 +4785,8 @@ export async function submitEditStaff(e) {
       role,
       department,
       title,
-      mustChangePassword
+      mustChangePassword,
+      permissions
     });
     if (res && res.success) {
       showToastNotification(`Staff details for ${name} updated and automatically synced with Firebase!`, 'success');
@@ -5623,6 +5772,43 @@ export async function hydrateSiteContent(fetchFromApi = true) {
   const c = currentSiteContent;
 
   // 1. Home Page Texts
+  // Public Footer Social Media Icons & Projects Portfolio Button
+  const social = c.social || {};
+  const socialPairs = [
+    ['footerSocialFacebook', social.facebook],
+    ['footerSocialInstagram', social.instagram],
+    ['footerSocialTiktok', social.tiktok]
+  ];
+  socialPairs.forEach(([elId, url]) => {
+    const a = document.getElementById(elId);
+    if (!a) return;
+    const clean = (url || '').trim();
+    if (clean) {
+      a.href = clean;
+      a.style.display = 'inline-flex';
+    } else {
+      a.removeAttribute('href');
+      a.style.display = 'none';
+    }
+  });
+
+  const portfolioBar = document.getElementById('publicPortfolioBar');
+  const portfolioBtn = document.getElementById('publicDownloadPortfolioBtn');
+  const portfolioUrl = (c.projects && c.projects.portfolioUrl ? c.projects.portfolioUrl : '').trim();
+  if (portfolioBar && portfolioBtn) {
+    if (portfolioUrl) {
+      portfolioBtn.href = portfolioUrl;
+      portfolioBar.style.display = 'block';
+    } else {
+      portfolioBtn.removeAttribute('href');
+      portfolioBar.style.display = 'none';
+    }
+  }
+  const adminPortInput = document.getElementById('adminPortfolioDriveUrl');
+  if (adminPortInput && document.activeElement !== adminPortInput) {
+    adminPortInput.value = portfolioUrl;
+  }
+
   if (c.home) {
     const heroEye = document.querySelector('#screen-home .section-eyebrow');
     if (heroEye && (c.home.heroEyebrowEn || c.home.heroEyebrowAr)) {
@@ -5886,6 +6072,13 @@ async function loadAdminContentManager() {
         if (document.getElementById('cms_kyc_venueMeetSubEn')) document.getElementById('cms_kyc_venueMeetSubEn').value = c.kyc.venueMeetSubEn || '';
         if (document.getElementById('cms_kyc_venueMeetSubAr')) document.getElementById('cms_kyc_venueMeetSubAr').value = c.kyc.venueMeetSubAr || '';
       }
+
+      // 7. Social Media inputs
+      if (c.social) {
+        if (document.getElementById('cms_social_facebook')) document.getElementById('cms_social_facebook').value = c.social.facebook || '';
+        if (document.getElementById('cms_social_instagram')) document.getElementById('cms_social_instagram').value = c.social.instagram || '';
+        if (document.getElementById('cms_social_tiktok')) document.getElementById('cms_social_tiktok').value = c.social.tiktok || '';
+      }
     }
 
     // Load Services catalog table in Services CMS tab
@@ -6072,7 +6265,7 @@ export async function uploadSliderPhoto(idx, fileInput) {
 }
 
 export function switchCMSTab(tabKey) {
-  const tabs = ['home', 'about', 'services', 'projects', 'contact', 'kyc', 'team'];
+  const tabs = ['home', 'about', 'services', 'projects', 'contact', 'kyc', 'team', 'social'];
   tabs.forEach(t => {
     const panel = document.getElementById(`cms-panel-${t}`);
     const btn = document.getElementById(`cmsTabBtn-${t}`);
@@ -6157,7 +6350,13 @@ export async function saveCMSContent() {
       headerTitleEn: document.getElementById('cms_projects_headerTitleEn')?.value.trim() || '',
       headerTitleAr: document.getElementById('cms_projects_headerTitleAr')?.value.trim() || '',
       disclaimerEn: document.getElementById('cms_projects_disclaimerEn')?.value.trim() || '',
-      disclaimerAr: document.getElementById('cms_projects_disclaimerAr')?.value.trim() || ''
+      disclaimerAr: document.getElementById('cms_projects_disclaimerAr')?.value.trim() || '',
+      portfolioUrl: currentSiteContent?.projects?.portfolioUrl || ''
+    },
+    social: {
+      facebook: document.getElementById('cms_social_facebook')?.value.trim() || '',
+      instagram: document.getElementById('cms_social_instagram')?.value.trim() || '',
+      tiktok: document.getElementById('cms_social_tiktok')?.value.trim() || ''
     },
     contact: {
       headerTitleEn: document.getElementById('cms_contact_headerTitleEn')?.value.trim() || '',
@@ -6195,6 +6394,23 @@ export async function saveCMSContent() {
     }
   } catch (err) {
     showToastNotification('Network error saving CMS changes: ' + err.message, 'error');
+  }
+}
+
+export async function savePortfolioUrl() {
+  const input = document.getElementById('adminPortfolioDriveUrl');
+  const portfolioUrl = input ? input.value.trim() : '';
+  try {
+    const res = await api.updatePortfolioUrl(portfolioUrl);
+    if (res && res.success) {
+      currentSiteContent = res.data;
+      hydrateSiteContent(false);
+      showToastNotification('Portfolio link saved and published!', 'success');
+    } else {
+      showToastNotification(res?.error || 'Failed to save portfolio link.', 'error');
+    }
+  } catch (err) {
+    showToastNotification('Network error: ' + err.message, 'error');
   }
 }
 
@@ -6450,6 +6666,11 @@ window.auroraSaveSettings = saveSettings;
 window.auroraToggleService = toggleService;
 window.auroraSwitchCMSTab = switchCMSTab;
 window.auroraSaveCMSContent = saveCMSContent;
+window.auroraSavePortfolioUrl = savePortfolioUrl;
+window.auroraToggleStaffAdvanced = toggleStaffAdvanced;
+window.auroraOpenUpdateInvoiceStatus = openUpdateInvoiceStatusModal;
+window.auroraSubmitInvoiceStatusUpdate = submitInvoiceStatusUpdate;
+window.auroraOpenInvoiceHistory = openInvoiceHistoryModal;
 window.auroraUploadSliderPhoto = uploadSliderPhoto;
 window.auroraCopyBriefRowLink = copyBriefRowLink;
 window.auroraOpenEditBriefModal = openEditBriefModal;

@@ -1151,8 +1151,19 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
   });
 
   // -----------------------------------------------------------------------------
-  // 8. CRM & CLIENT INQUIRIES (Anti-Spam & Sanitization)
+  // 8. CRM & CLIENT INQUIRIES (Anti-Spam, Sanitization & Firebase Cloud Sync)
   // -----------------------------------------------------------------------------
+  async function ensureInquiriesHydrated() {
+    try {
+      const cloudInquiries = await firebaseDbService.fetchInquiries();
+      if (cloudInquiries && cloudInquiries.length > 0) {
+        store.replaceInquiries(cloudInquiries);
+      }
+    } catch (e) {
+      console.warn('[Inquiries Cloud Hydrate Warning]:', e.message);
+    }
+  }
+
   app.post('/api/inquiries', formRateLimiter, async (req, res) => {
     try {
       const { fullName, brandName, phone, email, services, industry, budget, message, honeypot } = req.body;
@@ -1164,6 +1175,8 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
       if (!fullName || !brandName || !phone || !email || !message) {
         return res.status(400).json({ success: false, error: 'Please fill all required fields' });
       }
+
+      await ensureInquiriesHydrated();
 
       const cleanInquiry = {
         fullName: sanitizeString(fullName),
@@ -1179,7 +1192,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
       const inquiry = store.addInquiry(cleanInquiry);
 
       await Promise.allSettled([
-        firebaseDbService.syncInquiry(inquiry),
+        firebaseDbService.syncInquiries(store.getInquiries()),
         sheetsService.appendInquiry(inquiry)
       ]);
 
@@ -1189,48 +1202,82 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     }
   });
 
-  app.get('/api/inquiries', requireAuth(['super_admin', 'manager'], 'canViewCRM'), (req, res) => {
+  app.get('/api/inquiries', requireAuth(['super_admin', 'manager'], 'canViewCRM'), async (req, res) => {
+    await ensureInquiriesHydrated();
     const list = store.getInquiries();
     res.json({ success: true, count: list.length, data: list });
   });
 
-  app.patch('/api/inquiries/:id/status', requireAuth(['super_admin', 'manager'], 'canViewCRM'), (req, res) => {
+  app.patch('/api/inquiries/:id/status', requireAuth(['super_admin', 'manager'], 'canViewCRM'), async (req, res) => {
     const { status, note } = req.body;
     if (!status) return res.status(400).json({ success: false, error: 'Status is required' });
 
+    await ensureInquiriesHydrated();
     const updated = store.updateInquiryStatus(req.params.id, status, note, req.authUser.email);
     if (!updated) return res.status(404).json({ success: false, error: 'Inquiry not found' });
+    await firebaseDbService.syncInquiries(store.getInquiries());
     res.json({ success: true, data: updated });
   });
 
   // -----------------------------------------------------------------------------
-  // 8.1. QUOTATIONS & COMMERCIAL INVOICES (PART 4)
+  // 8.1. QUOTATIONS & COMMERCIAL INVOICES (PART 4 - Cloud Synced)
   // -----------------------------------------------------------------------------
-  app.get('/api/invoices', requireAuth(['super_admin', 'manager', 'employee']), (req, res) => {
+  async function ensureInvoicesHydrated() {
+    try {
+      const cloudInvoices = await firebaseDbService.fetchInvoices();
+      if (cloudInvoices && cloudInvoices.length > 0) {
+        store.replaceInvoices(cloudInvoices);
+      }
+    } catch (e) {
+      console.warn('[Invoices Cloud Hydrate Warning]:', e.message);
+    }
+  }
+
+  app.get('/api/invoices', requireAuth(['super_admin', 'manager'], 'canViewInvoices'), async (req, res) => {
+    await ensureInvoicesHydrated();
     const list = store.getInvoices();
     res.json({ success: true, count: list.length, data: list });
   });
 
-  app.get('/api/invoices/:id', requireAuth(['super_admin', 'manager', 'employee']), (req, res) => {
+  app.get('/api/invoices/:id', requireAuth(['super_admin', 'manager'], 'canViewInvoices'), async (req, res) => {
+    await ensureInvoicesHydrated();
     const inv = store.getInvoiceById(req.params.id);
     if (!inv) return res.status(404).json({ success: false, error: 'Invoice not found' });
     res.json({ success: true, data: inv });
   });
 
-  app.post('/api/invoices', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.post('/api/invoices', requireAuth(['super_admin', 'manager'], 'canCreateInvoices'), async (req, res) => {
+    await ensureInvoicesHydrated();
     const inv = store.saveInvoice(req.body, req.authUser.email);
+    await firebaseDbService.syncInvoices(store.getInvoices());
     res.status(201).json({ success: true, message: 'Invoice / Quotation created', data: inv });
   });
 
-  app.put('/api/invoices/:id', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.put('/api/invoices/:id', requireAuth(['super_admin', 'manager'], 'canCreateInvoices'), async (req, res) => {
+    await ensureInvoicesHydrated();
     const inv = store.saveInvoice({ ...req.body, id: req.params.id }, req.authUser.email);
     if (!inv) return res.status(404).json({ success: false, error: 'Invoice not found' });
+    await firebaseDbService.syncInvoices(store.getInvoices());
     res.json({ success: true, message: 'Invoice / Quotation updated', data: inv });
   });
 
-  app.delete('/api/invoices/:id', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.patch('/api/invoices/:id/status', requireAuth(['super_admin', 'manager'], 'canCreateInvoices'), async (req, res) => {
+    const { status, note, amountPaid } = req.body || {};
+    if (!status || !String(note || '').trim()) {
+      return res.status(400).json({ success: false, error: 'Status and update details/note are required' });
+    }
+    await ensureInvoicesHydrated();
+    const inv = store.saveInvoice({ id: req.params.id, status, statusNote: String(note).trim(), statusAmountPaid: amountPaid || '' }, req.authUser.email);
+    if (!inv) return res.status(404).json({ success: false, error: 'Invoice not found' });
+    await firebaseDbService.syncInvoices(store.getInvoices());
+    res.json({ success: true, message: 'Status updated', data: inv });
+  });
+
+  app.delete('/api/invoices/:id', requireAuth(['super_admin', 'manager'], 'canCreateInvoices'), async (req, res) => {
+    await ensureInvoicesHydrated();
     const deleted = store.deleteInvoice(req.params.id, req.authUser.email);
     if (!deleted) return res.status(404).json({ success: false, error: 'Invoice not found' });
+    await firebaseDbService.syncInvoices(store.getInvoices());
     res.json({ success: true, message: 'Invoice / Quotation deleted' });
   });
 
@@ -1453,15 +1500,37 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
   });
 
   // -----------------------------------------------------------------------------
-  // 11. CMS & CONTENT MANAGEMENT & MARQUEE
+  // 11. CMS & CONTENT MANAGEMENT & MARQUEE (Cloud Hydrated via Firebase DB)
   // -----------------------------------------------------------------------------
-  app.get('/api/content', (req, res) => {
+  async function ensureSiteContentHydrated() {
+    try {
+      const cloudContent = await firebaseDbService.fetchSiteContent();
+      if (cloudContent && typeof cloudContent === 'object') {
+        store.replaceSiteContent(cloudContent);
+      }
+    } catch (e) {
+      console.warn('[Site Content Cloud Hydrate Warning]:', e.message);
+    }
+  }
+
+  app.get('/api/content', async (req, res) => {
+    await ensureSiteContentHydrated();
     res.json({ success: true, data: store.getSiteContent() });
   });
 
-  app.put('/api/content', requireAuth(['super_admin']), (req, res) => {
+  app.put('/api/content', requireAuth(['super_admin']), async (req, res) => {
+    await ensureSiteContentHydrated();
     const updated = store.updateSiteContent(req.body, req.authUser.email);
+    await firebaseDbService.syncSiteContent(updated);
     res.json({ success: true, message: 'Site content updated successfully', data: updated });
+  });
+
+  app.put('/api/content/portfolio', requireAuth(['super_admin', 'manager']), async (req, res) => {
+    await ensureSiteContentHydrated();
+    const portfolioUrl = String(req.body?.portfolioUrl || '').trim();
+    const updated = store.updateSiteContent({ projects: { portfolioUrl } }, req.authUser.email);
+    await firebaseDbService.syncSiteContent(updated);
+    res.json({ success: true, message: 'Portfolio link updated successfully', data: updated });
   });
 
   app.get('/api/content/marquee', (req, res) => {

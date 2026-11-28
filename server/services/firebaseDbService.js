@@ -255,6 +255,9 @@ class FirebaseDbService {
   }
 
   async syncSiteContent(content) {
+    if (!this.isConnected || !this.db) {
+      await this.init();
+    }
     if (!this.isConnected || !this.db) return;
     try {
       await this.db.ref('site_content').set(content);
@@ -263,12 +266,97 @@ class FirebaseDbService {
     }
   }
 
+  async fetchSiteContent() {
+    if (!this.isConnected || !this.db) {
+      await this.init();
+    }
+    if (!this.isConnected || !this.db) return null;
+    try {
+      const snap = await this.db.ref('site_content').once('value');
+      return snap.val() || null;
+    } catch (e) {
+      console.warn('[Firebase DB Fetch Content Error]:', e.message);
+      return null;
+    }
+  }
+
   async syncInquiry(inquiry) {
+    if (!this.isConnected || !this.db) {
+      await this.init();
+    }
     if (!this.isConnected || !this.db || !inquiry) return;
     try {
       await this.db.ref(`inquiries/${inquiry.id}`).set(inquiry);
     } catch (e) {
       console.warn('[Firebase DB Sync Inquiry Error]:', e.message);
+    }
+  }
+
+  async syncInquiries(inquiries) {
+    if (!this.isConnected || !this.db) {
+      await this.init();
+    }
+    if (!this.isConnected || !this.db) return;
+    try {
+      const map = {};
+      (inquiries || []).forEach(inq => {
+        if (inq && inq.id) map[inq.id] = inq;
+      });
+      await this.db.ref('inquiries').set(map);
+    } catch (e) {
+      console.warn('[Firebase DB Sync Inquiries Error]:', e.message);
+    }
+  }
+
+  async fetchInquiries() {
+    if (!this.isConnected || !this.db) {
+      await this.init();
+    }
+    if (!this.isConnected || !this.db) return null;
+    try {
+      const snap = await this.db.ref('inquiries').once('value');
+      const val = snap.val();
+      if (!val) return null;
+      const arr = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
+      arr.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      return arr.length ? arr : null;
+    } catch (e) {
+      console.warn('[Firebase DB Fetch Inquiries Error]:', e.message);
+      return null;
+    }
+  }
+
+  async syncInvoices(invoices) {
+    if (!this.isConnected || !this.db) {
+      await this.init();
+    }
+    if (!this.isConnected || !this.db) return;
+    try {
+      const map = {};
+      (invoices || []).forEach(inv => {
+        if (inv && inv.id) map[inv.id] = inv;
+      });
+      await this.db.ref('invoices').set(map);
+    } catch (e) {
+      console.warn('[Firebase DB Sync Invoices Error]:', e.message);
+    }
+  }
+
+  async fetchInvoices() {
+    if (!this.isConnected || !this.db) {
+      await this.init();
+    }
+    if (!this.isConnected || !this.db) return null;
+    try {
+      const snap = await this.db.ref('invoices').once('value');
+      const val = snap.val();
+      if (!val) return null;
+      const arr = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
+      arr.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      return arr.length ? arr : null;
+    } catch (e) {
+      console.warn('[Firebase DB Fetch Invoices Error]:', e.message);
+      return null;
     }
   }
 

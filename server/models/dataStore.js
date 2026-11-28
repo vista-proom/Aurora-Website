@@ -554,6 +554,8 @@ class DataStoreV2 {
         canGenerateBriefs: true,
         canViewCRM: true,
         canEditCRMStatus: true,
+        canViewInvoices: true,
+        canCreateInvoices: true,
         canEditSiteSettings: true,
         canManageUsers: true,
         canViewActivityLog: true,
@@ -567,6 +569,8 @@ class DataStoreV2 {
         canGenerateBriefs: true,
         canViewCRM: true,
         canEditCRMStatus: true,
+        canViewInvoices: true,
+        canCreateInvoices: true,
         canEditSiteSettings: false,
         canManageUsers: false,
         canViewActivityLog: true,
@@ -580,6 +584,8 @@ class DataStoreV2 {
         canGenerateBriefs: false,
         canViewCRM: false,
         canEditCRMStatus: false,
+        canViewInvoices: false,
+        canCreateInvoices: false,
         canEditSiteSettings: false,
         canManageUsers: false,
         canViewActivityLog: false,
@@ -1003,6 +1009,7 @@ class DataStoreV2 {
     const token = `${Math.random().toString(36).substring(2, 6)}-${cleanName}`;
     const expiryDate = new Date(Date.now() + daysValid * 24 * 60 * 60 * 1000).toISOString();
 
+    const actorUser = actorEmail ? this.getUserByEmail(actorEmail) : null;
     const newBrief = {
       token,
       clientName,
@@ -1013,6 +1020,7 @@ class DataStoreV2 {
       submittedAt: null,
       data: null,
       createdBy: actorEmail || "manager@aurora.eg",
+      createdByName: actorUser?.name || actorEmail || "Manager",
       createdAt: new Date().toISOString()
     };
 
@@ -1106,6 +1114,12 @@ class DataStoreV2 {
     return this.read(this.inquiriesFile);
   }
 
+  replaceInquiries(inquiriesList) {
+    if (Array.isArray(inquiriesList) && inquiriesList.length > 0) {
+      this.write(this.inquiriesFile, inquiriesList);
+    }
+  }
+
   addInquiry(inquiryData) {
     const list = this.read(this.inquiriesFile);
     const newInquiry = {
@@ -1189,6 +1203,12 @@ class DataStoreV2 {
     return this.read(this.contentFile);
   }
 
+  replaceSiteContent(content) {
+    if (content && typeof content === 'object') {
+      this.write(this.contentFile, content);
+    }
+  }
+
   updateSiteContent(updates, actorEmail) {
     const current = this.read(this.contentFile) || {};
     // Deep merge page keys
@@ -1232,6 +1252,12 @@ class DataStoreV2 {
     return this.read(this.invoicesFile) || [];
   }
 
+  replaceInvoices(invoicesList) {
+    if (Array.isArray(invoicesList) && invoicesList.length > 0) {
+      this.write(this.invoicesFile, invoicesList);
+    }
+  }
+
   getInvoiceById(id) {
     const list = this.getInvoices();
     return list.find(inv => inv.id === id || inv.number === id) || null;
@@ -1239,45 +1265,79 @@ class DataStoreV2 {
 
   saveInvoice(data, actorEmail) {
     const list = this.read(this.invoicesFile) || [];
+    const actorUser = actorEmail ? this.getUserByEmail(actorEmail) : null;
+    const actorName = actorUser?.name || actorEmail || 'Staff';
     let invoice = null;
     if (data.id) {
       const idx = list.findIndex(inv => inv.id === data.id);
       if (idx !== -1) {
+        const current = list[idx];
+        const prevStatus = current.status || 'Draft';
+        const nextStatus = data.status || prevStatus;
+        const history = Array.isArray(current.statusHistory) ? [...current.statusHistory] : [];
+        if (data.statusNote || nextStatus !== prevStatus) {
+          history.unshift({
+            id: 'invsh-' + Date.now(),
+            fromStatus: prevStatus,
+            toStatus: nextStatus,
+            note: data.statusNote || '',
+            amountPaid: data.statusAmountPaid || '',
+            updatedBy: actorName,
+            updatedByEmail: actorEmail || '',
+            updatedAt: new Date().toISOString()
+          });
+        }
+        const { statusNote, statusAmountPaid, ...cleanData } = data;
         list[idx] = {
-          ...list[idx],
-          ...data,
+          ...current,
+          ...cleanData,
+          statusHistory: history,
           updatedAt: new Date().toISOString()
         };
         invoice = list[idx];
-        this.logActivity("Invoice / Quotation Updated", actorEmail, { number: invoice.number, client: invoice.clientName, total: invoice.total });
+        this.logActivity("Invoice / Quotation Updated", actorEmail, { number: invoice.number, client: invoice.clientName, total: invoice.total, status: invoice.status });
       }
     }
     if (!invoice) {
       const count = list.length + 1;
       const year = new Date().getFullYear();
       const autoNum = `AUR-${year}-${String(count).padStart(3, '0')}`;
+      const { statusNote, statusAmountPaid, ...cleanData } = data;
+      const initStatus = cleanData.status || 'Draft';
       invoice = {
         id: `inv-${Date.now()}`,
-        number: data.number || autoNum,
-        type: data.type || 'quotation', // 'quotation' | 'invoice'
-        status: data.status || 'Draft', // 'Draft' | 'Sent' | 'Approved' | 'Paid'
-        clientName: data.clientName || '',
-        brandName: data.brandName || '',
-        email: data.email || '',
-        phone: data.phone || '',
-        address: data.address || '',
-        taxId: data.taxId || '',
-        issueDate: data.issueDate || new Date().toISOString().split('T')[0],
-        dueDate: data.dueDate || '',
-        items: Array.isArray(data.items) ? data.items : [],
-        subtotal: Number(data.subtotal) || 0,
-        discount: Number(data.discount) || 0,
-        applyVat: Boolean(data.applyVat),
-        vatAmount: Number(data.vatAmount) || 0,
-        total: Number(data.total) || 0,
-        currency: data.currency || 'EGP',
-        notes: data.notes || '',
-        paymentMethod: data.paymentMethod || 'Next Bank / CIB / Instapay',
+        number: cleanData.number || autoNum,
+        type: cleanData.type || 'quotation', // 'quotation' | 'invoice'
+        status: initStatus, // 'Draft' | 'Sent' | 'Approved' | '50% Paid' | 'Paid'
+        clientName: cleanData.clientName || '',
+        brandName: cleanData.brandName || '',
+        email: cleanData.email || '',
+        phone: cleanData.phone || '',
+        address: cleanData.address || '',
+        taxId: cleanData.taxId || '',
+        issueDate: cleanData.issueDate || new Date().toISOString().split('T')[0],
+        dueDate: cleanData.dueDate || '',
+        items: Array.isArray(cleanData.items) ? cleanData.items : [],
+        subtotal: Number(cleanData.subtotal) || 0,
+        discount: Number(cleanData.discount) || 0,
+        applyVat: Boolean(cleanData.applyVat),
+        vatAmount: Number(cleanData.vatAmount) || 0,
+        total: Number(cleanData.total) || 0,
+        currency: cleanData.currency || 'EGP',
+        notes: cleanData.notes || '',
+        paymentMethod: cleanData.paymentMethod || 'Next Bank / CIB / Instapay',
+        statusHistory: [
+          {
+            id: 'invsh-' + Date.now(),
+            fromStatus: null,
+            toStatus: initStatus,
+            note: statusNote || 'Document created',
+            amountPaid: statusAmountPaid || '',
+            updatedBy: actorName,
+            updatedByEmail: actorEmail || '',
+            updatedAt: new Date().toISOString()
+          }
+        ],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };

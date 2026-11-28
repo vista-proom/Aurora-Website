@@ -569,6 +569,15 @@ export async function updateSiteContent(updates) {
   return res.json();
 }
 
+export async function updatePortfolioUrl(portfolioUrl) {
+  const res = await authFetch(`${BASE_URL}/content/portfolio`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ portfolioUrl })
+  });
+  return res.json();
+}
+
 export async function uploadCMSPhoto(dataUrl, filename) {
   const res = await authFetch(`${BASE_URL}/content/upload-photo`, {
     method: 'POST',
@@ -644,6 +653,15 @@ export async function saveInvoice(data) {
     method: isEdit ? 'PUT' : 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
+  });
+  return res.json();
+}
+
+export async function updateInvoiceStatus(id, status, note, amountPaid = '') {
+  const res = await authFetch(`${BASE_URL}/invoices/${id}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status, note, amountPaid })
   });
   return res.json();
 }

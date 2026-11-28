@@ -3589,17 +3589,9 @@
             <span>Advanced</span>
             <span id="addStaffAdvancedArrow">▼</span>
           </button>
-          <div id="addStaffAdvancedBox" style="display:none; margin-top:10px; padding:14px; background:var(--surface-sunken); border:1px solid var(--border-default); border-radius:var(--radius-sm);">
-            <div style="font-size:0.82rem; font-weight:700; margin-bottom:10px; color:var(--text-primary);">Granular Feature Permissions</div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.85rem;">
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="addPerm_canApproveProjects"> Approve Projects</label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="addPerm_canPublishProjects"> Publish Live</label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="addPerm_canViewBriefs"> View KYC</label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="addPerm_canGenerateBriefs"> Generate KYC</label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="addPerm_canViewCRM"> CRM Access</label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="addPerm_canViewInvoices"> Quotations &amp; Invoices Tab</label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; grid-column:1 / -1;"><input type="checkbox" id="addPerm_canCreateInvoices"> Generate a new Quotation or Invoice</label>
-            </div>
+          <div id="addStaffAdvancedBox" style="display:none; margin-top:10px; padding:14px; background:var(--surface-sunken); border:1px solid var(--border-default); border-radius:var(--radius-sm); max-height:360px; overflow-y:auto;">
+            <div style="font-size:0.82rem; font-weight:700; margin-bottom:10px; color:var(--text-primary);">Sectioned Granular Permissions</div>
+            <div id="addStaffPermissionsSections" style="display:flex; flex-direction:column; gap:10px;"></div>
           </div>
         </div>
 
@@ -3670,17 +3662,9 @@
             <span>Advanced</span>
             <span id="editStaffAdvancedArrow">▼</span>
           </button>
-          <div id="editStaffAdvancedBox" style="display:none; margin-top:10px; padding:14px; background:var(--surface-sunken); border:1px solid var(--border-default); border-radius:var(--radius-sm);">
-            <div style="font-size:0.82rem; font-weight:700; margin-bottom:10px; color:var(--text-primary);">Granular Feature Permissions</div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.85rem;">
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="editPerm_canApproveProjects"> Approve Projects</label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="editPerm_canPublishProjects"> Publish Live</label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="editPerm_canViewBriefs"> View KYC</label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="editPerm_canGenerateBriefs"> Generate KYC</label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="editPerm_canViewCRM"> CRM Access</label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="editPerm_canViewInvoices"> Quotations &amp; Invoices Tab</label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; grid-column:1 / -1;"><input type="checkbox" id="editPerm_canCreateInvoices"> Generate a new Quotation or Invoice</label>
-            </div>
+          <div id="editStaffAdvancedBox" style="display:none; margin-top:10px; padding:14px; background:var(--surface-sunken); border:1px solid var(--border-default); border-radius:var(--radius-sm); max-height:360px; overflow-y:auto;">
+            <div style="font-size:0.82rem; font-weight:700; margin-bottom:10px; color:var(--text-primary);">Sectioned Granular Permissions</div>
+            <div id="editStaffPermissionsSections" style="display:flex; flex-direction:column; gap:10px;"></div>
           </div>
         </div>
 

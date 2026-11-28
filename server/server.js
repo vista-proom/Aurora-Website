@@ -617,7 +617,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
   // -----------------------------------------------------------------------------
   // 5. USER DIRECTORY & PROFILES (RBAC & RLS)
   // -----------------------------------------------------------------------------
-  app.get('/api/users', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.get('/api/users', requireAuth(['super_admin', 'manager'], ['canManageUsers']), (req, res) => {
     const users = store.getUsers().map(({ password, ...u }) => u);
     res.json({ success: true, data: users });
   });
@@ -699,7 +699,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.json({ success: true, user: safeUser });
   });
 
-  app.post('/api/users', requireAuth(['super_admin']), async (req, res) => {
+  app.post('/api/users', requireAuth(['super_admin'], ['canAddStaff']), async (req, res) => {
     const { name, email, password, role, title, department, permissions, mustChangePassword } = req.body;
     if (!email || !name) {
       return res.status(400).json({ success: false, error: 'Name and email are required' });
@@ -770,7 +770,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     });
   });
 
-  app.put('/api/users/:id', requireAuth(['super_admin']), async (req, res) => {
+  app.put('/api/users/:id', requireAuth(['super_admin'], ['canEditStaff']), async (req, res) => {
     const { name, email, role, title, department, permissions, mustChangePassword, password } = req.body || {};
     const updatePayload = {};
     if (name !== undefined) updatePayload.name = sanitizeString(name);
@@ -810,7 +810,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     });
   });
 
-  app.delete('/api/users/:id', requireAuth(['super_admin']), async (req, res) => {
+  app.delete('/api/users/:id', requireAuth(['super_admin'], ['canDeleteStaff']), async (req, res) => {
     const deleted = store.deleteUser(req.params.id, req.authUser.email);
     if (!deleted) {
       return res.status(404).json({ success: false, error: 'User not found' });
@@ -829,7 +829,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.json({ success: true, message: 'User deleted from portal and Firebase successfully' });
   });
 
-  app.patch('/api/users/:id/permissions', requireAuth(['super_admin']), async (req, res) => {
+  app.patch('/api/users/:id/permissions', requireAuth(['super_admin'], ['canEditStaff']), async (req, res) => {
     const { role, permissions } = req.body;
     const updated = store.updateUserPermissions(req.params.id, role, permissions, req.authUser.email);
     if (!updated) {
@@ -848,7 +848,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.json({ success: true, data: safeUser });
   });
 
-  app.post('/api/users/:id/expire-password', requireAuth(['super_admin']), async (req, res) => {
+  app.post('/api/users/:id/expire-password', requireAuth(['super_admin'], ['canResetStaffPassword']), async (req, res) => {
     const user = store.expireUserPassword(req.params.id, req.authUser.email);
     if (!user) {
       return res.status(404).json({ success: false, error: 'Staff member not found' });
@@ -1037,7 +1037,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.json({ success: true, data: updated });
   });
 
-  app.patch('/api/projects/:id', requireAuth(['super_admin', 'manager']), async (req, res) => {
+  app.patch('/api/projects/:id', requireAuth(['super_admin', 'manager'], ['canEditProjects']), async (req, res) => {
     try {
       await ensureProjectsHydrated();
       const updates = await uploadProjectMediaToCloudinary(req.body);
@@ -1050,7 +1050,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     }
   });
 
-  app.put('/api/projects/:id', requireAuth(['super_admin', 'manager']), async (req, res) => {
+  app.put('/api/projects/:id', requireAuth(['super_admin', 'manager'], ['canEditProjects']), async (req, res) => {
     try {
       await ensureProjectsHydrated();
       const updates = await uploadProjectMediaToCloudinary(req.body);
@@ -1072,7 +1072,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.json({ success: true, message: 'Project rejected', data: updated });
   });
 
-  app.patch('/api/projects/:id/withdraw', requireAuth(['super_admin', 'manager']), async (req, res) => {
+  app.patch('/api/projects/:id/withdraw', requireAuth(['super_admin', 'manager'], ['canPublishProjects']), async (req, res) => {
     await ensureProjectsHydrated();
     const updated = store.withdrawProject(req.params.id, req.authUser.email);
     if (!updated) return res.status(404).json({ success: false, error: 'Project not found' });
@@ -1253,7 +1253,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.status(201).json({ success: true, message: 'Invoice / Quotation created', data: inv });
   });
 
-  app.put('/api/invoices/:id', requireAuth(['super_admin', 'manager'], 'canCreateInvoices'), async (req, res) => {
+  app.put('/api/invoices/:id', requireAuth(['super_admin', 'manager'], ['canEditInvoices']), async (req, res) => {
     await ensureInvoicesHydrated();
     const inv = store.saveInvoice({ ...req.body, id: req.params.id }, req.authUser.email);
     if (!inv) return res.status(404).json({ success: false, error: 'Invoice not found' });
@@ -1261,7 +1261,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.json({ success: true, message: 'Invoice / Quotation updated', data: inv });
   });
 
-  app.patch('/api/invoices/:id/status', requireAuth(['super_admin', 'manager'], 'canCreateInvoices'), async (req, res) => {
+  app.patch('/api/invoices/:id/status', requireAuth(['super_admin', 'manager'], ['canUpdateInvoiceStatus']), async (req, res) => {
     const { status, note, amountPaid } = req.body || {};
     if (!status || !String(note || '').trim()) {
       return res.status(400).json({ success: false, error: 'Status and update details/note are required' });
@@ -1273,7 +1273,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.json({ success: true, message: 'Status updated', data: inv });
   });
 
-  app.delete('/api/invoices/:id', requireAuth(['super_admin', 'manager'], 'canCreateInvoices'), async (req, res) => {
+  app.delete('/api/invoices/:id', requireAuth(['super_admin', 'manager'], ['canDeleteInvoices']), async (req, res) => {
     await ensureInvoicesHydrated();
     const deleted = store.deleteInvoice(req.params.id, req.authUser.email);
     if (!deleted) return res.status(404).json({ success: false, error: 'Invoice not found' });
@@ -1366,7 +1366,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     }
   });
 
-  app.patch('/api/briefs/:token/extend', requireAuth(['super_admin', 'manager'], 'canViewBriefs'), async (req, res) => {
+  app.patch('/api/briefs/:token/extend', requireAuth(['super_admin', 'manager'], ['canExtendBriefs']), async (req, res) => {
     await ensureBriefsHydrated();
     const cleanToken = sanitizeString(req.params.token);
     const target = req.body.targetDate || req.body.days || 14;
@@ -1376,7 +1376,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.json({ success: true, data: updated });
   });
 
-  app.patch('/api/briefs/:token/deactivate', requireAuth(['super_admin', 'manager'], 'canViewBriefs'), async (req, res) => {
+  app.patch('/api/briefs/:token/deactivate', requireAuth(['super_admin', 'manager'], ['canDeactivateBriefs']), async (req, res) => {
     await ensureBriefsHydrated();
     const cleanToken = sanitizeString(req.params.token);
     const updated = store.deactivateBrief(cleanToken, req.authUser.email);
@@ -1385,7 +1385,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.json({ success: true, data: updated });
   });
 
-  app.patch('/api/briefs/:token/edit', requireAuth(['super_admin', 'manager'], 'canViewBriefs'), async (req, res) => {
+  app.patch('/api/briefs/:token/edit', requireAuth(['super_admin', 'manager'], ['canEditBriefs']), async (req, res) => {
     await ensureBriefsHydrated();
     const cleanToken = sanitizeString(req.params.token);
     const result = store.updateBrief(cleanToken, req.body, req.authUser.email);
@@ -1490,12 +1490,12 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.send(csv);
   });
 
-  app.get('/api/activity-logs', requireAuth(['super_admin']), (req, res) => {
+  app.get('/api/activity-logs', requireAuth(['super_admin'], ['canViewActivityLog']), (req, res) => {
     const logs = store.getActivityLogs();
     res.json({ success: true, count: logs.length, data: logs });
   });
 
-  app.get('/api/monitoring', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.get('/api/monitoring', requireAuth(['super_admin', 'manager'], ['canViewMonitoring']), (req, res) => {
     res.json({ success: true, data: store.getMonitoring() });
   });
 
@@ -1518,14 +1518,14 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.json({ success: true, data: store.getSiteContent() });
   });
 
-  app.put('/api/content', requireAuth(['super_admin']), async (req, res) => {
+  app.put('/api/content', requireAuth(['super_admin'], ['canEditSiteSettings']), async (req, res) => {
     await ensureSiteContentHydrated();
     const updated = store.updateSiteContent(req.body, req.authUser.email);
     await firebaseDbService.syncSiteContent(updated);
     res.json({ success: true, message: 'Site content updated successfully', data: updated });
   });
 
-  app.put('/api/content/portfolio', requireAuth(['super_admin', 'manager']), async (req, res) => {
+  app.put('/api/content/portfolio', requireAuth(['super_admin', 'manager'], ['canUpdatePortfolio']), async (req, res) => {
     await ensureSiteContentHydrated();
     const portfolioUrl = String(req.body?.portfolioUrl || '').trim();
     const updated = store.updateSiteContent({ projects: { portfolioUrl } }, req.authUser.email);
@@ -1537,7 +1537,7 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.json({ success: true, data: store.getMarquee() });
   });
 
-  app.put('/api/content/marquee', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.put('/api/content/marquee', requireAuth(['super_admin', 'manager'], ['canViewPartnerLogos']), (req, res) => {
     const updated = store.saveMarquee(req.body, req.authUser.email);
     res.json({ success: true, message: 'Partner logos marquee updated and published', data: updated });
   });

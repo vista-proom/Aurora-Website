@@ -2984,39 +2984,116 @@ export async function removeFromPortfolio(projectId) {
 // -----------------------------------------------------------------------------
 // SUPER ADMIN & MANAGER CONTROL PANEL (Requirements B.4 - B.11)
 // -----------------------------------------------------------------------------
+function hasAdminPerm(permKey) {
+  if (!currentUser) return false;
+  if (currentUser.role === 'super_admin') return true;
+  if (currentUser.permissions && currentUser.permissions[permKey] === true) return true;
+  return false;
+}
+
+const ADMIN_TAB_PERM_MAP = {
+  briefs: 'canViewBriefs',
+  crm: 'canViewCRM',
+  awaiting: 'canViewApprovalProjects',
+  projects: 'canViewProjectsControl',
+  invoices: 'canViewInvoices',
+  users: 'canManageUsers',
+  settings: '__super_admin__',
+  marquee: 'canViewPartnerLogos',
+  content: 'canEditSiteSettings',
+  activity: 'canViewActivityLog',
+  monitoring: 'canViewMonitoring'
+};
+
+function applyAdminPermissionsVisibility() {
+  const isSuper = currentUser?.role === 'super_admin';
+  let firstAllowedSec = null;
+
+  document.querySelectorAll('#adminSidebarNav li[data-admin-sec]').forEach(li => {
+    const sec = li.getAttribute('data-admin-sec');
+    const perm = ADMIN_TAB_PERM_MAP[sec];
+    const allowed = perm === '__super_admin__' ? isSuper : (isSuper || hasAdminPerm(perm) || (currentUser?.role === 'manager' && perm !== 'canManageUsers' && perm !== 'canEditSiteSettings'));
+    li.style.display = allowed ? 'block' : 'none';
+    if (allowed && !firstAllowedSec) firstAllowedSec = sec;
+  });
+
+  // Gate top-level action buttons
+  const genBriefBtn = document.querySelector('#admin-sec-briefs button[onclick*="auroraOpenGenerateBrief"]');
+  if (genBriefBtn) genBriefBtn.style.display = hasAdminPerm('canGenerateBriefs') ? '' : 'none';
+
+  const addProjBtn = document.querySelector('#admin-sec-projects button[onclick*="auroraOpenAddWork"]');
+  if (addProjBtn) addProjBtn.style.display = hasAdminPerm('canAddProject') ? '' : 'none';
+
+  const portCard = document.getElementById('adminPortfolioDriveUrl')?.closest('.card');
+  if (portCard) portCard.style.display = hasAdminPerm('canUpdatePortfolio') ? '' : 'none';
+
+  const createInvBtn = document.querySelector('#admin-sec-invoices button[onclick*="auroraOpenCreateInvoiceModal"]');
+  if (createInvBtn) createInvBtn.style.display = hasAdminPerm('canCreateInvoices') ? '' : 'none';
+
+  const addStaffBtn = document.querySelector('#admin-sec-users button[onclick*="auroraOpenAddStaff"]');
+  if (addStaffBtn) addStaffBtn.style.display = hasAdminPerm('canAddStaff') ? '' : 'none';
+
+  const marqueeSpeed = document.getElementById('marqueeSpeedSlider');
+  if (marqueeSpeed) marqueeSpeed.disabled = !hasAdminPerm('canEditMarqueeSpeed');
+
+  const addLogoBtn = document.querySelector('#admin-sec-marquee button[onclick*="auroraOpenAddMarqueeLogo"]');
+  if (addLogoBtn) addLogoBtn.style.display = hasAdminPerm('canAddPartnerLogo') ? '' : 'none';
+
+  // Gate CMS subtabs
+  const cmsSubtabPerms = {
+    home: 'canEditCmsHome',
+    about: 'canEditCmsAbout',
+    services: 'canEditCmsServices',
+    projects: 'canEditCmsProjects',
+    contact: 'canEditCmsContact',
+    kyc: 'canEditCmsKyc',
+    team: 'canEditCmsTeam',
+    social: 'canEditCmsSocial'
+  };
+  Object.entries(cmsSubtabPerms).forEach(([tab, perm]) => {
+    const btn = document.getElementById(`cmsTabBtn-${tab}`);
+    if (btn) btn.style.display = hasAdminPerm(perm) ? '' : 'none';
+  });
+
+  return firstAllowedSec;
+}
+
 async function loadAdminData() {
   if (!currentUser) return;
 
   const tagline = document.getElementById('adminRoleTagline');
   if (tagline) {
-    tagline.textContent = currentUser.role === 'super_admin' ? 'SUPER ADMIN ACCESS' : 'MANAGER CONTROL PANEL';
+    tagline.textContent = currentUser.role === 'super_admin' ? 'SUPER ADMIN ACCESS' : (currentUser.role === 'manager' ? 'MANAGER CONTROL PANEL' : 'STAFF ACCESS PANEL');
   }
 
-  // Hide Super Admin items if role is manager
+  const firstAllowed = applyAdminPermissionsVisibility();
+  if (firstAllowed) {
+    const firstBtn = document.querySelector(`#adminSidebarNav li[data-admin-sec="${firstAllowed}"] a`);
+    switchAdminSection(firstAllowed, firstBtn);
+  }
+
   const isSuper = currentUser.role === 'super_admin';
-  document.querySelectorAll('.super-admin-only').forEach(el => {
-    el.style.display = isSuper ? 'block' : 'none';
-  });
-
-  // Load section data
-  await loadAdminBriefs();
-  await loadAdminCRM();
-  await loadAdminAwaitingReview();
-  await loadAdminProjectsControl();
-  await loadAdminInvoices();
-  await loadAdminMarquee();
-  if (isSuper) {
-    await loadAdminUsers();
-    await loadAdminSettings();
-    await loadAdminContentManager();
-    await loadAdminActivityLogs();
-  }
-  await loadAdminMonitoring();
+  const tasks = [];
+  if (isSuper || currentUser.role === 'manager' || hasAdminPerm('canViewBriefs')) tasks.push(loadAdminBriefs());
+  if (isSuper || currentUser.role === 'manager' || hasAdminPerm('canViewCRM')) tasks.push(loadAdminCRM());
+  if (isSuper || currentUser.role === 'manager' || hasAdminPerm('canViewApprovalProjects')) tasks.push(loadAdminAwaitingReview());
+  if (isSuper || currentUser.role === 'manager' || hasAdminPerm('canViewProjectsControl')) tasks.push(loadAdminProjectsControl());
+  if (isSuper || currentUser.role === 'manager' || hasAdminPerm('canViewInvoices')) tasks.push(loadAdminInvoices());
+  if (isSuper || currentUser.role === 'manager' || hasAdminPerm('canViewPartnerLogos')) tasks.push(loadAdminMarquee());
+  if (isSuper || hasAdminPerm('canManageUsers')) tasks.push(loadAdminUsers());
+  if (isSuper) tasks.push(loadAdminSettings());
+  if (isSuper || hasAdminPerm('canEditSiteSettings')) tasks.push(loadAdminContentManager());
+  if (isSuper || hasAdminPerm('canViewActivityLog')) tasks.push(loadAdminActivityLogs());
+  if (isSuper || currentUser.role === 'manager' || hasAdminPerm('canViewMonitoring')) tasks.push(loadAdminMonitoring());
+  await Promise.allSettled(tasks);
 }
 
 export function switchAdminSection(sectionId, btn) {
-  if (sectionId === 'activity' && currentUser?.role !== 'super_admin') {
-    showToastNotification('Access Denied: Activity Log is restricted to Super Admin only.', 'error');
+  const perm = ADMIN_TAB_PERM_MAP[sectionId];
+  const isSuper = currentUser?.role === 'super_admin';
+  const allowed = perm === '__super_admin__' ? isSuper : (isSuper || hasAdminPerm(perm) || (currentUser?.role === 'manager' && perm !== 'canManageUsers' && perm !== 'canEditSiteSettings'));
+  if (!allowed) {
+    showToastNotification('Access Denied: You do not have permission for this section.', 'error');
     return;
   }
   const sections = ['briefs', 'crm', 'awaiting', 'projects', 'invoices', 'users', 'settings', 'marquee', 'content', 'activity', 'monitoring'];
@@ -3117,14 +3194,14 @@ function renderAdminBriefsTable(briefs, targetTbodyId = null) {
                 <!-- Requirement 6.2: Copy Link as icon button -->
                 <button class="btn btn-sm btn-secondary" onclick="window.auroraCopyBriefRowLink('${b.token}')" title="Copy public link" style="padding:4px 8px; font-size:14px;">🔗</button>
                 <!-- Requirement 6.2: Open Answers as icon button when submitted -->
-                ${isSubmitted ? `<button class="btn btn-sm btn-primary" onclick="window.auroraOpenBriefAnswers('${b.token}')" title="Open Answers" style="padding:4px 8px; font-size:14px;">👁️</button>` : ''}
+                ${isSubmitted && hasAdminPerm('canOpenBriefAnswers') ? `<button class="btn btn-sm btn-primary" onclick="window.auroraOpenBriefAnswers('${b.token}')" title="Open Answers" style="padding:4px 8px; font-size:14px;">👁️</button>` : ''}
                 <!-- Requirement D.1.3: Edit button for pending and deactivated briefs -->
-                ${canEdit ? `<button class="btn btn-sm btn-outline" onclick="window.auroraOpenEditBriefModal('${b.token}')">Edit</button>` : ''}
+                ${canEdit && hasAdminPerm('canEditBriefs') ? `<button class="btn btn-sm btn-outline" onclick="window.auroraOpenEditBriefModal('${b.token}')">Edit</button>` : ''}
                 <!-- Requirement 6.2: Meeting Prep only appears when status is submitted -->
                 ${isSubmitted ? `<button class="btn btn-sm btn-outline" onclick="window.auroraOpenMeetingPrep('${b.token}')">📋 Meeting Prep</button>` : ''}
                 <!-- Requirement 6.2: Extend & Deactivate disappear when status is submitted -->
-                ${!isSubmitted ? `<button class="btn btn-sm btn-secondary" onclick="window.auroraOpenExtendBriefModal('${b.token}')">Extend</button>` : ''}
-                ${!isSubmitted && !isDeactivated ? `<button class="btn btn-sm btn-secondary" style="color:var(--status-error);" onclick="window.auroraDeactivateBrief('${b.token}')">Deactivate</button>` : ''}
+                ${!isSubmitted && hasAdminPerm('canExtendBriefs') ? `<button class="btn btn-sm btn-secondary" onclick="window.auroraOpenExtendBriefModal('${b.token}')">Extend</button>` : ''}
+                ${!isSubmitted && !isDeactivated && hasAdminPerm('canDeactivateBriefs') ? `<button class="btn btn-sm btn-secondary" style="color:var(--status-error);" onclick="window.auroraDeactivateBrief('${b.token}')">Deactivate</button>` : ''}
               </div>
             </td>
           </tr>
@@ -3578,7 +3655,7 @@ function renderAdminCRMTable(inquiries, targetTbodyId = null) {
           <td style="white-space:nowrap;">${new Date(inq.createdAt).toLocaleDateString()}</td>
           <td style="white-space:nowrap; font-weight:700; color:var(--timeline-accent);">${escapeHtml(inq.budget || '—')}</td>
           <td>
-            <select class="form-select" style="padding:4px 8px; font-size:0.85rem;" onchange="window.auroraOpenCRMStatusModal('${inq.id}', this.value); this.value = '${inq.status || 'Pending'}';">
+            <select class="form-select" style="padding:4px 8px; font-size:0.85rem;" ${hasAdminPerm('canEditCRMStatus') ? '' : 'disabled title="No permission to adjust status"'} onchange="window.auroraOpenCRMStatusModal('${inq.id}', this.value); this.value = '${inq.status || 'Pending'}';">
               <option value="Pending" ${inq.status === 'Pending' ? 'selected' : ''}>Pending</option>
               <option value="Contacted" ${inq.status === 'Contacted' ? 'selected' : ''}>Contacted</option>
               <option value="Meeting Scheduled" ${inq.status === 'Meeting Scheduled' ? 'selected' : ''}>Meeting Scheduled</option>
@@ -3589,7 +3666,7 @@ function renderAdminCRMTable(inquiries, targetTbodyId = null) {
           </td>
           <td style="white-space:nowrap;">
             <!-- Requirement D.2.1: Open full CRM details modal showing all fields and Q&A -->
-            <button class="btn btn-sm btn-outline" onclick="window.auroraOpenCRMDetails('${inq.id}')">View Details</button>
+            ${hasAdminPerm('canViewCRMDetails') ? `<button class="btn btn-sm btn-outline" onclick="window.auroraOpenCRMDetails('${inq.id}')">View Details</button>` : '<span style="font-size:12px; color:var(--text-muted);">—</span>'}
           </td>
         </tr>
       `).join('');
@@ -3819,13 +3896,11 @@ export function renderAdminInvoicesTable(invoices) {
         <td style="white-space:nowrap; font-weight:800; color:var(--timeline-accent);">${formattedTotal} ${inv.currency || 'EGP'}</td>
         <td><span class="status-pill status-${statusClass}" style="${statusStyle}">${rawStatus}</span></td>
         <td style="white-space:nowrap;">
-          <button class="btn btn-sm btn-primary" onclick="window.auroraViewInvoicePrint('${inv.id}')" title="View & Print">🖨️ View / Print</button>
-          <button class="btn btn-sm btn-secondary" onclick="window.auroraOpenInvoiceHistory('${inv.id}')" title="View Status History">📜 History</button>
-          ${canEditInv ? `
-            <button class="btn btn-sm btn-secondary" onclick="window.auroraOpenUpdateInvoiceStatus('${inv.id}')" title="Update Status">🔄 Status</button>
-            <button class="btn btn-sm btn-outline" onclick="window.auroraOpenCreateInvoiceModal('${inv.id}')" title="Edit">✏️</button>
-            <button class="btn btn-sm btn-secondary" style="color:var(--status-error);" onclick="window.auroraDeleteInvoice('${inv.id}')" title="Delete">🗑️</button>
-          ` : ''}
+          ${hasAdminPerm('canPrintInvoices') ? `<button class="btn btn-sm btn-primary" onclick="window.auroraViewInvoicePrint('${inv.id}')" title="View & Print">🖨️ View / Print</button>` : ''}
+          ${hasAdminPerm('canViewInvoiceHistory') ? `<button class="btn btn-sm btn-secondary" onclick="window.auroraOpenInvoiceHistory('${inv.id}')" title="View Status History">📜 History</button>` : ''}
+          ${hasAdminPerm('canUpdateInvoiceStatus') ? `<button class="btn btn-sm btn-secondary" onclick="window.auroraOpenUpdateInvoiceStatus('${inv.id}')" title="Update Status">🔄 Status</button>` : ''}
+          ${hasAdminPerm('canEditInvoices') ? `<button class="btn btn-sm btn-outline" onclick="window.auroraOpenCreateInvoiceModal('${inv.id}')" title="Edit">✏️</button>` : ''}
+          ${hasAdminPerm('canDeleteInvoices') ? `<button class="btn btn-sm btn-secondary" style="color:var(--status-error);" onclick="window.auroraDeleteInvoice('${inv.id}')" title="Delete">🗑️</button>` : ''}
         </td>
       </tr>
     `;
@@ -4316,10 +4391,10 @@ async function loadAdminAwaitingReview() {
             <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
               <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 <!-- Requirement D.3.1: Reject button with reason -->
-                <button class="btn btn-sm btn-outline" style="color:var(--status-error);" onclick="window.auroraOpenRejectProject('${p.id}')">Reject</button>
-                ${!p.isApproved ? `<button class="btn btn-sm btn-secondary" onclick="window.auroraApproveProject('${p.id}')">Approve (Staged)</button>` : ''}
+                ${hasAdminPerm('canApproveProjects') ? `<button class="btn btn-sm btn-outline" style="color:var(--status-error);" onclick="window.auroraOpenRejectProject('${p.id}')">Reject</button>` : ''}
+                ${!p.isApproved && hasAdminPerm('canApproveProjects') ? `<button class="btn btn-sm btn-secondary" onclick="window.auroraApproveProject('${p.id}')">Approve (Staged)</button>` : ''}
                 <!-- Requirement D.3.2: Only show Publish Live if already approved/live -->
-                ${canPublish ? `<button class="btn btn-sm btn-primary" onclick="window.auroraPublishProject('${p.id}')">Publish Live</button>` : ''}
+                ${canPublish && hasAdminPerm('canPublishProjects') ? `<button class="btn btn-sm btn-primary" onclick="window.auroraPublishProject('${p.id}')">Publish Live</button>` : ''}
               </div>
               ${!canPublish ? `<span style="font-size:0.78rem; color:var(--text-muted);">Must stage/approve before publishing live</span>` : ''}
             </div>
@@ -4410,10 +4485,10 @@ async function loadAdminProjectsControl() {
           <td>
             <div style="display:flex; gap:6px; flex-wrap:wrap;">
               <!-- Requirement D.4.1: Edit project drawer -->
-              <button class="btn btn-sm btn-secondary" onclick="window.auroraOpenEditProject('${p.id}')">Edit</button>
-              ${!p.isPublished 
+              ${hasAdminPerm('canEditProjects') ? `<button class="btn btn-sm btn-secondary" onclick="window.auroraOpenEditProject('${p.id}')">Edit</button>` : ''}
+              ${hasAdminPerm('canPublishProjects') ? (!p.isPublished 
                 ? `<button class="btn btn-sm btn-primary" onclick="window.auroraPublishProject('${p.id}')">Publish</button>` 
-                : `<!-- Requirement D.4.2: Withdraw to Draft --><button class="btn btn-sm btn-outline" style="color:var(--status-warning);" onclick="window.auroraWithdrawProject('${p.id}')">Withdraw</button>`}
+                : `<!-- Requirement D.4.2: Withdraw to Draft --><button class="btn btn-sm btn-outline" style="color:var(--status-warning);" onclick="window.auroraWithdrawProject('${p.id}')">Withdraw</button>`) : ''}
               <button class="btn btn-sm btn-outline" onclick="window.auroraNavigate('/projects/${p.slug}')">View</button>
             </div>
           </td>
@@ -4426,9 +4501,8 @@ async function loadAdminProjectsControl() {
 }
 
 export async function openEditProject(id) {
-  const user = getAuthenticatedUser();
-  if (!user || (user.role !== 'super_admin' && user.role !== 'manager')) {
-    console.warn('[Security Guard] Blocked attempt to open editProjectDrawer without admin privileges.');
+  if (!hasAdminPerm('canEditProjects')) {
+    console.warn('[Security Guard] Blocked attempt to open editProjectDrawer without edit privileges.');
     return;
   }
 
@@ -4473,9 +4547,8 @@ export async function openEditProject(id) {
 
 export async function submitEditProject(e) {
   e.preventDefault();
-  const user = getAuthenticatedUser();
-  if (!user || (user.role !== 'super_admin' && user.role !== 'manager')) {
-    showToastNotification('Unauthorized: You must be logged in as a Manager or Super Admin to edit projects.', 'error');
+  if (!hasAdminPerm('canEditProjects')) {
+    showToastNotification('Unauthorized: You do not have permission to edit projects.', 'error');
     return;
   }
   const id = document.getElementById('editProjectIdInput').value;
@@ -4529,15 +4602,135 @@ export async function withdrawProject(id) {
 
 // 5. Staff Users & Permissions (Super Admin Only)
 let allAdminUsers = [];
-const STAFF_PERM_DEFS = [
-  { key: 'canApproveProjects', label: 'Approve Projects' },
-  { key: 'canPublishProjects', label: 'Publish Live' },
-  { key: 'canViewBriefs', label: 'View KYC' },
-  { key: 'canGenerateBriefs', label: 'Generate KYC' },
-  { key: 'canViewCRM', label: 'CRM Access' },
-  { key: 'canViewInvoices', label: 'Quotations & Invoices Tab' },
-  { key: 'canCreateInvoices', label: 'Generate Quotation/Invoice' }
+const STAFF_PERM_SECTIONS = [
+  {
+    title: 'Approval Projects',
+    tabPerm: { key: 'canViewApprovalProjects', label: 'View Projects Awaiting Review Tab' },
+    subs: [
+      { key: 'canApproveProjects', label: 'Approve & Reject' }
+    ]
+  },
+  {
+    title: 'Project Control Panel',
+    tabPerm: { key: 'canViewProjectsControl', label: 'View Project Control Panel Tab' },
+    subs: [
+      { key: 'canUpdatePortfolio', label: 'Update Portfolio' },
+      { key: 'canEditProjects', label: 'Edit' },
+      { key: 'canPublishProjects', label: 'Publish / Withdraw' },
+      { key: 'canAddProject', label: 'Add New Project' }
+    ]
+  },
+  {
+    title: 'KYC',
+    tabPerm: { key: 'canViewBriefs', label: 'View KYC Tab (Meeting Preps, Refresh, Search, Filter, Sort)' },
+    subs: [
+      { key: 'canGenerateBriefs', label: 'Generate KYC Link' },
+      { key: 'canEditBriefs', label: 'Edit' },
+      { key: 'canExtendBriefs', label: 'Extend' },
+      { key: 'canDeactivateBriefs', label: 'Deactivate' },
+      { key: 'canOpenBriefAnswers', label: 'Open Answers' }
+    ]
+  },
+  {
+    title: 'CRM',
+    tabPerm: { key: 'canViewCRM', label: 'View CRM Tab (Search, Filter)' },
+    subs: [
+      { key: 'canEditCRMStatus', label: 'Adjust Status' },
+      { key: 'canViewCRMDetails', label: 'View Details' }
+    ]
+  },
+  {
+    title: 'Quotations & Invoices',
+    tabPerm: { key: 'canViewInvoices', label: 'View Quotations Tab (Search, Filter, Sort)' },
+    subs: [
+      { key: 'canCreateInvoices', label: 'Create New Quotation / Invoice' },
+      { key: 'canPrintInvoices', label: 'View / Print' },
+      { key: 'canViewInvoiceHistory', label: 'History' },
+      { key: 'canUpdateInvoiceStatus', label: 'Status' },
+      { key: 'canEditInvoices', label: 'Edit' },
+      { key: 'canDeleteInvoices', label: 'Delete' }
+    ]
+  },
+  {
+    title: 'Staff Users & Permissions',
+    tabPerm: { key: 'canManageUsers', label: 'View Staff Users Tab Only' },
+    subs: [
+      { key: 'canAddStaff', label: 'Add New Staff Member' },
+      { key: 'canEditStaff', label: 'Edit' },
+      { key: 'canResetStaffPassword', label: 'Reset Password' },
+      { key: 'canDeleteStaff', label: 'Delete' }
+    ]
+  },
+  {
+    title: 'Partner Logos',
+    tabPerm: { key: 'canViewPartnerLogos', label: 'View Tab & Save to Website Button' },
+    subs: [
+      { key: 'canEditMarqueeSpeed', label: 'Scroll Speed' },
+      { key: 'canAddPartnerLogo', label: 'Add New Client Logo' },
+      { key: 'canReorderPartnerLogos', label: 'Reorder' },
+      { key: 'canDeletePartnerLogo', label: 'Delete' }
+    ]
+  },
+  {
+    title: 'Edit Website Data',
+    tabPerm: { key: 'canEditSiteSettings', label: 'View Tab & Save Website Data Button' },
+    subs: [
+      { key: 'canEditCmsHome', label: 'Home' },
+      { key: 'canEditCmsAbout', label: 'About' },
+      { key: 'canEditCmsServices', label: 'Services' },
+      { key: 'canEditCmsProjects', label: 'Projects' },
+      { key: 'canEditCmsContact', label: 'Contact' },
+      { key: 'canEditCmsKyc', label: 'KYC' },
+      { key: 'canEditCmsTeam', label: 'Team' },
+      { key: 'canEditCmsSocial', label: 'Social Media' }
+    ]
+  },
+  {
+    title: 'Activity Log',
+    tabPerm: { key: 'canViewActivityLog', label: 'View Activity Log Tab' },
+    subs: []
+  },
+  {
+    title: 'Monitor',
+    tabPerm: { key: 'canViewMonitoring', label: 'View Monitor Tab' },
+    subs: []
+  }
 ];
+
+const ALL_STAFF_PERM_KEYS = STAFF_PERM_SECTIONS.flatMap(s => [s.tabPerm.key, ...s.subs.map(sub => sub.key)]);
+
+function renderStaffPermissionSections(prefix, perms = {}) {
+  const containerId = prefix === 'addPerm' ? 'addStaffPermissionsSections' : 'editStaffPermissionsSections';
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  container.innerHTML = STAFF_PERM_SECTIONS.map((sec, idx) => {
+    const tabChecked = Boolean(perms[sec.tabPerm.key]);
+    const subsHtml = sec.subs.length ? `
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(155px, 1fr)); gap:6px 12px; margin-top:8px; padding-left:18px; border-left:2px solid var(--border-default);">
+        ${sec.subs.map(sub => `
+          <label style="display:flex; align-items:center; gap:7px; cursor:pointer; font-size:0.82rem; color:var(--text-secondary);">
+            <input type="checkbox" id="${prefix}_${sub.key}" data-parent-tab="${prefix}_${sec.tabPerm.key}" ${perms[sub.key] ? 'checked' : ''} onchange="if(this.checked){const p=document.getElementById('${prefix}_${sec.tabPerm.key}');if(p)p.checked=true;}">
+            <span>${sub.label}</span>
+          </label>
+        `).join('')}
+      </div>
+    ` : '';
+
+    return `
+      <div style="background:var(--surface-card); border:1px solid var(--border-default); border-radius:var(--radius-sm); padding:10px 12px;" data-perm-sec-idx="${idx}">
+        <label style="display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer; margin:0;">
+          <div>
+            <strong style="font-size:0.88rem; color:var(--text-primary);">${sec.title}</strong>
+            <div style="font-size:0.76rem; color:var(--text-muted);">${sec.tabPerm.label}</div>
+          </div>
+          <input type="checkbox" id="${prefix}_${sec.tabPerm.key}" ${tabChecked ? 'checked' : ''} style="width:16px; height:16px; accent-color:var(--brand-electric-teal);" onchange="if(!this.checked){this.closest('[data-perm-sec-idx]').querySelectorAll('[data-parent-tab]').forEach(c=>c.checked=false);}">
+        </label>
+        ${subsHtml}
+      </div>
+    `;
+  }).join('');
+}
 
 export function toggleStaffAdvanced(mode) {
   const box = document.getElementById(mode === 'add' ? 'addStaffAdvancedBox' : 'editStaffAdvancedBox');
@@ -4550,9 +4743,9 @@ export function toggleStaffAdvanced(mode) {
 
 function collectModalPermissions(prefix) {
   const perms = {};
-  STAFF_PERM_DEFS.forEach(def => {
-    const el = document.getElementById(`${prefix}_${def.key}`);
-    if (el) perms[def.key] = Boolean(el.checked);
+  ALL_STAFF_PERM_KEYS.forEach(key => {
+    const el = document.getElementById(`${prefix}_${key}`);
+    if (el) perms[key] = Boolean(el.checked);
   });
   return perms;
 }
@@ -4572,9 +4765,14 @@ async function loadAdminUsers() {
           ? `<span class="badge" style="background:rgba(255,154,0,0.15); color:#ff9a00; font-size:10px; padding:2px 6px; margin-left:6px;" title="User is required to change password on next sign-in">🔒 Pass Change Req.</span>`
           : '';
 
-        const activePermBadges = STAFF_PERM_DEFS
-          .filter(def => Boolean(p[def.key]))
-          .map(def => `<span class="badge" style="background:rgba(0,255,198,0.12); color:var(--brand-electric-teal); font-size:11px; padding:2px 7px;">${def.label}</span>`)
+        const roleLabel = u.role === 'super_admin' ? 'Super Admin' : (u.role === 'manager' ? 'Manager' : 'Employee');
+        const roleBadgeColor = u.role === 'super_admin'
+          ? 'background:rgba(106,0,244,0.18); color:var(--brand-soft-lilac);'
+          : (u.role === 'manager' ? 'background:rgba(0,255,198,0.14); color:var(--brand-electric-teal);' : 'background:var(--surface-sunken); color:var(--text-secondary);');
+
+        const activeSections = STAFF_PERM_SECTIONS
+          .filter(sec => Boolean(p[sec.tabPerm.key]) || sec.subs.some(sub => Boolean(p[sub.key])))
+          .map(sec => `<span class="badge" style="background:rgba(0,255,198,0.12); color:var(--brand-electric-teal); font-size:11px; padding:2px 7px;">${sec.title}</span>`)
           .join('');
 
         return `
@@ -4585,24 +4783,20 @@ async function loadAdminUsers() {
             </td>
             <td><code>${escapeHtml(u.email)}</code></td>
             <td>
-              <select class="form-select" style="padding:4px 8px; font-size:0.85rem;" onchange="window.auroraUpdateUserRole('${u.id}', this.value)" ${isMasterAdmin ? 'disabled title="Master Admin role cannot be modified"' : ''}>
-                <option value="employee" ${u.role === 'employee' ? 'selected' : ''}>Employee</option>
-                <option value="manager" ${u.role === 'manager' ? 'selected' : ''}>Manager</option>
-                <option value="super_admin" ${u.role === 'super_admin' ? 'selected' : ''}>Super Admin</option>
-              </select>
+              <span class="badge" style="${roleBadgeColor} font-size:12px; padding:4px 10px; font-weight:700;">${roleLabel}</span>
             </td>
             <td>
               <div style="display:flex; flex-wrap:wrap; gap:4px; max-width:300px;">
-                ${activePermBadges || '<span style="font-size:12px; color:var(--text-muted);">Standard Access Only</span>'}
+                ${activeSections || '<span style="font-size:12px; color:var(--text-muted);">Standard Access Only</span>'}
               </div>
             </td>
             <td>
               <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-                <button type="button" class="btn btn-sm btn-secondary" style="font-size:0.78rem; padding:4px 8px; white-space:nowrap;" onclick="window.auroraOpenEditStaffModal('${u.id}')" title="Edit staff details & permissions">✏️ Edit</button>
-                <button type="button" class="btn btn-sm btn-secondary" style="color:var(--brand-electric-teal); border-color:rgba(0,255,192,0.3); font-size:0.78rem; padding:4px 8px; white-space:nowrap;" onclick="window.auroraExpireAndResetStaffPassword('${u.id}', '${u.email}', '${u.name}')" title="Expire old password & trigger reset email">🔑 Reset Pass</button>
-                ${isMasterAdmin ? '<span style="font-size:11px; color:var(--text-muted); margin-left:4px;">Protected</span>' : `
+                ${hasAdminPerm('canEditStaff') ? `<button type="button" class="btn btn-sm btn-secondary" style="font-size:0.78rem; padding:4px 8px; white-space:nowrap;" onclick="window.auroraOpenEditStaffModal('${u.id}')" title="Edit staff details & permissions">✏️ Edit</button>` : ''}
+                ${hasAdminPerm('canResetStaffPassword') ? `<button type="button" class="btn btn-sm btn-secondary" style="color:var(--brand-electric-teal); border-color:rgba(0,255,192,0.3); font-size:0.78rem; padding:4px 8px; white-space:nowrap;" onclick="window.auroraExpireAndResetStaffPassword('${u.id}', '${u.email}', '${u.name}')" title="Expire old password & trigger reset email">🔑 Reset Pass</button>` : ''}
+                ${isMasterAdmin ? '<span style="font-size:11px; color:var(--text-muted); margin-left:4px;">Protected</span>' : (hasAdminPerm('canDeleteStaff') ? `
                   <button type="button" class="btn btn-sm btn-secondary" style="color:var(--status-error); border-color:rgba(255,71,87,0.3); font-size:0.78rem; padding:4px 8px;" onclick="window.auroraDeleteStaff('${u.id}', '${u.name}')" title="Revoke access & delete from portal and Firebase">🗑️ Delete</button>
-                `}
+                ` : '')}
               </div>
             </td>
           </tr>
@@ -4660,10 +4854,7 @@ export function openAddStaffModal() {
     if (form) form.reset();
     const toggle = document.getElementById('newStaffMustChangePassword');
     if (toggle) toggle.checked = true;
-    STAFF_PERM_DEFS.forEach(def => {
-      const el = document.getElementById(`addPerm_${def.key}`);
-      if (el) el.checked = false;
-    });
+    renderStaffPermissionSections('addPerm', {});
     const advBox = document.getElementById('addStaffAdvancedBox');
     const advArrow = document.getElementById('addStaffAdvancedArrow');
     if (advBox) advBox.style.display = 'none';
@@ -4742,10 +4933,7 @@ export function openEditStaffModal(userId) {
   if (roleSelect) roleSelect.disabled = isMasterAdmin;
 
   const perms = u.permissions || {};
-  STAFF_PERM_DEFS.forEach(def => {
-    const el = document.getElementById(`editPerm_${def.key}`);
-    if (el) el.checked = Boolean(perms[def.key]);
-  });
+  renderStaffPermissionSections('editPerm', perms);
   const advBox = document.getElementById('editStaffAdvancedBox');
   const advArrow = document.getElementById('editStaffAdvancedArrow');
   if (advBox) advBox.style.display = 'none';
@@ -5627,11 +5815,13 @@ function renderAdminMarqueeTable() {
         ${escapeHtml(logo.src)}
       </td>
       <td style="text-align:center; white-space:nowrap;">
-        <button type="button" class="btn btn-sm btn-secondary" onclick="window.auroraMoveMarqueeLogo(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} title="Move Up">⬆️</button>
-        <button type="button" class="btn btn-sm btn-secondary" onclick="window.auroraMoveMarqueeLogo(${idx}, 1)" ${idx === logos.length - 1 ? 'disabled' : ''} title="Move Down">⬇️</button>
+        ${hasAdminPerm('canReorderPartnerLogos') ? `
+          <button type="button" class="btn btn-sm btn-secondary" onclick="window.auroraMoveMarqueeLogo(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} title="Move Up">⬆️</button>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="window.auroraMoveMarqueeLogo(${idx}, 1)" ${idx === logos.length - 1 ? 'disabled' : ''} title="Move Down">⬇️</button>
+        ` : '—'}
       </td>
       <td style="text-align:right;">
-        <button type="button" class="btn btn-sm btn-secondary" style="color:var(--status-error);" onclick="window.auroraRemoveMarqueeLogo(${idx})" title="Remove Logo">🗑️</button>
+        ${hasAdminPerm('canDeletePartnerLogo') ? `<button type="button" class="btn btn-sm btn-secondary" style="color:var(--status-error);" onclick="window.auroraRemoveMarqueeLogo(${idx})" title="Remove Logo">🗑️</button>` : ''}
       </td>
     </tr>
   `).join('');

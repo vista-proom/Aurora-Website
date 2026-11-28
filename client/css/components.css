@@ -806,3 +806,46 @@
   border-right: 4px solid #3b82f6;
 }
 
+
+/* Compact Staff Permissions Overflow Info Tooltip */
+.perm-info-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.perm-info-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  line-height: 1;
+}
+.perm-info-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 220px;
+  max-width: 300px;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  z-index: 60;
+  white-space: normal;
+}
+.perm-info-wrap:hover .perm-info-tooltip,
+.perm-info-wrap:focus-within .perm-info-tooltip {
+  display: block;
+}

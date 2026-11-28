@@ -4758,7 +4758,7 @@ async function loadAdminUsers() {
     const res = await api.fetchUsers();
     if (res.success && res.data) {
       allAdminUsers = res.data;
-      tbody.innerHTML = res.data.map(u => {
+      tbody.innerHTML = res.data.map((u, uIdx) => {
         const p = u.permissions || {};
         const isMasterAdmin = u.email === 'admin@aurora.eg';
         const mustChangeBadge = (u.mustChangePassword || u.mustResetPassword)
@@ -4767,16 +4767,34 @@ async function loadAdminUsers() {
 
         const roleLabel = u.role === 'super_admin' ? 'Super Admin' : (u.role === 'manager' ? 'Manager' : 'Employee');
         const roleBadgeClass = u.role === 'super_admin'
-          ? 'badge badge-accent'
+          ? 'badge badge-purple'
           : (u.role === 'manager' ? 'badge badge-teal' : 'badge');
         const roleBadgeStyle = u.role === 'employee'
           ? 'background:var(--surface-sunken); color:var(--text-primary); border:1px solid var(--border-default); font-size:12px; padding:4px 10px; font-weight:700;'
-          : 'font-size:12px; padding:4px 10px; font-weight:700;';
+          : (u.role === 'super_admin'
+            ? 'background:rgba(106,0,244,0.12); color:#6a00f4; border:1px solid rgba(106,0,244,0.28); font-size:12px; padding:4px 10px; font-weight:700;'
+            : 'font-size:12px; padding:4px 10px; font-weight:700;');
 
-        const activeSections = STAFF_PERM_SECTIONS
+        const activeSectionList = STAFF_PERM_SECTIONS
           .filter(sec => Boolean(p[sec.tabPerm.key]) || sec.subs.some(sub => Boolean(p[sub.key])))
-          .map(sec => `<span class="badge badge-teal" style="font-size:11px; padding:3px 8px; font-weight:700;">${sec.title}</span>`)
+          .map(sec => sec.title);
+
+        const visiblePerms = activeSectionList.slice(0, 2);
+        const hiddenPerms = activeSectionList.slice(2);
+        const visibleBadgesHtml = visiblePerms
+          .map(title => `<span class="badge badge-teal" style="font-size:11px; padding:3px 8px; font-weight:700; white-space:nowrap;">${title}</span>`)
           .join('');
+        const overflowInfoHtml = hiddenPerms.length ? `
+          <span class="perm-info-wrap" tabindex="0">
+            <span class="perm-info-btn" title="Hover to view remaining permissions">i</span>
+            <span class="perm-info-tooltip" style="${uIdx === 0 ? 'top:calc(100% + 8px); bottom:auto;' : ''}">
+              <div style="font-size:11px; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">+${hiddenPerms.length} More Permissions</div>
+              <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                ${hiddenPerms.map(t => `<span class="badge badge-teal" style="font-size:10.5px; padding:2px 7px; font-weight:700;">${t}</span>`).join('')}
+              </div>
+            </span>
+          </span>
+        ` : '';
 
         return `
           <tr>
@@ -4789,8 +4807,9 @@ async function loadAdminUsers() {
               <span class="${roleBadgeClass}" style="${roleBadgeStyle}">${roleLabel}</span>
             </td>
             <td>
-              <div style="display:flex; flex-wrap:wrap; gap:4px; max-width:300px;">
-                ${activeSections || '<span style="font-size:12px; color:var(--text-muted);">Standard Access Only</span>'}
+              <div style="display:flex; align-items:center; flex-wrap:nowrap; gap:5px;">
+                ${visibleBadgesHtml || '<span style="font-size:12px; color:var(--text-muted); white-space:nowrap;">Standard Access Only</span>'}
+                ${overflowInfoHtml}
               </div>
             </td>
             <td>

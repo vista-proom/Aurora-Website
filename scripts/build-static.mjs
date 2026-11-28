@@ -85,6 +85,7 @@ if (fs.existsSync(indexHtmlPath)) {
     const routeDir = path.join(OUT, route);
     fs.mkdirSync(routeDir, { recursive: true });
     fs.copyFileSync(indexHtmlPath, path.join(routeDir, 'index.html'));
+    fs.copyFileSync(indexHtmlPath, `${routeDir}.html`);
   }
 }
 

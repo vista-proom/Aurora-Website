@@ -95,7 +95,7 @@ export function getAuthenticatedUser() {
 
 function handleUrl(path, callback) {
   const [pathname, search] = (path || '/').split('?');
-  const cleanPath = pathname.replace(/^\/ar/, '') || '/';
+  const cleanPath = (pathname.replace(/^\/ar(?=\/|$)/, '') || '/').replace(/\/+$/, '') || '/';
   const queryParams = new URLSearchParams(search || (typeof window !== 'undefined' ? window.location.search : ''));
   const user = getAuthenticatedUser();
 

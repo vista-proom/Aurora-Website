@@ -218,3 +218,11 @@ img, video, iframe {
     padding-bottom: 56px;
   }
 }
+
+/* Lazy layout/paint rendering for below-the-fold sections */
+#screen-home > .section,
+#screen-home > .dark-band:not(.hero-section),
+.site-footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 560px;
+}

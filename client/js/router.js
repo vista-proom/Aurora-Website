@@ -170,7 +170,26 @@ function handleUrl(path, callback) {
   }
 }
 
+export function ensureDeferredDomMounted() {
+  let mountedAny = false;
+  ['tpl-deferred-screens', 'tpl-deferred-modals'].forEach((tplId) => {
+    const tpl = document.getElementById(tplId);
+    if (tpl && tpl.content && tpl.parentNode) {
+      tpl.parentNode.insertBefore(tpl.content, tpl);
+      tpl.remove();
+      mountedAny = true;
+    }
+  });
+  if (mountedAny) {
+    window.dispatchEvent(new CustomEvent('aurora:deferredDomMounted'));
+  }
+}
+
 export function setScreen(screenId, param = null, callback) {
+  if (screenId === 'brief' || screenId === 'login' || screenId === 'portal' || screenId === 'admin') {
+    ensureDeferredDomMounted();
+  }
+
   // Strict Guard: Never unhide protected screens without verified active session
   if (screenId === 'admin') {
     const user = getAuthenticatedUser();

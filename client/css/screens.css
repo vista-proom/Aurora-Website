@@ -719,19 +719,28 @@ html[dir="rtl"] .marquee-track {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
+  background: transparent;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  border-left: 3px solid transparent;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
   color: var(--text-muted);
+  font-family: inherit;
   font-weight: 500;
   font-size: 0.9rem;
+  text-align: left;
+  text-decoration: none;
   transition: all 160ms ease;
   cursor: pointer;
-  border-left: 3px solid transparent;
 }
 
 [dir="rtl"] .portal-nav-link {
   border-left: none;
   border-right: 3px solid transparent;
+  text-align: right;
 }
 
 .portal-nav-link:hover {

@@ -47,8 +47,14 @@ export function initRouter(onNavigate) {
     }
   });
 
+  // Restore dynamic SPA path forwarded from lightweight 404.html (?__p=...)
+  const forwardedPath = new URLSearchParams(window.location.search).get('__p');
+  if (forwardedPath && forwardedPath.startsWith('/')) {
+    window.history.replaceState(null, '', forwardedPath + window.location.hash);
+  }
+
   // Initial load
-  handleUrl(window.location.pathname, onNavigate);
+  handleUrl(window.location.pathname + window.location.search, onNavigate);
 }
 
 export function navigateTo(path, callback) {
@@ -254,7 +260,7 @@ export function setScreen(screenId, param = null, callback) {
       document.head.appendChild(canonical);
     }
     const cleanRoutePath = routeMeta.path.replace(':slug', param || '').replace(':token', param || '');
-    canonical.href = `https://auroragroup.eg${cleanRoutePath === '/' ? '' : cleanRoutePath}`;
+    canonical.href = `https://aurora-eg.ziadbahgat.me${cleanRoutePath === '/' ? '/' : cleanRoutePath}`;
   }
 
   if (typeof callback === 'function') {

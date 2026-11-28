@@ -74,13 +74,27 @@ if (fs.existsSync(indexHtmlPath)) {
   fs.writeFileSync(indexHtmlPath, html, 'utf8');
 }
 
-// 4. Keep custom 404.html if present in client/, otherwise copy index.html
+// 4. Generate static route entrypoints so GitHub Pages serves HTTP 200 for routed pages
+const staticRoutes = [
+  'about', 'services', 'projects', 'contact', 'team', 'privacy', 'terms',
+  'login', 'portal', 'admin',
+  'ar', 'ar/about', 'ar/services', 'ar/projects', 'ar/contact', 'ar/team', 'ar/privacy', 'ar/terms'
+];
+if (fs.existsSync(indexHtmlPath)) {
+  for (const route of staticRoutes) {
+    const routeDir = path.join(OUT, route);
+    fs.mkdirSync(routeDir, { recursive: true });
+    fs.copyFileSync(indexHtmlPath, path.join(routeDir, 'index.html'));
+  }
+}
+
+// 5. Keep lightweight custom 404.html if present in client/, otherwise fallback to index.html
 const custom404 = path.join(SRC, '404.html');
 if (!fs.existsSync(custom404) && fs.existsSync(indexHtmlPath)) {
   fs.copyFileSync(indexHtmlPath, path.join(OUT, '404.html'));
 }
 
-// 5. Write CNAME & .nojekyll
+// 6. Write CNAME & .nojekyll
 fs.writeFileSync(path.join(OUT, 'CNAME'), 'aurora-eg.ziadbahgat.me\n', 'utf8');
 fs.writeFileSync(path.join(OUT, '.nojekyll'), '', 'utf8');
 

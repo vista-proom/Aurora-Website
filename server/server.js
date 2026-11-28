@@ -1646,12 +1646,8 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.type('text/plain');
     res.send(`User-agent: *
 Allow: /
-Disallow: /admin
-Disallow: /portal
-Disallow: /brief/
-Disallow: /api/
 
-Sitemap: https://auroragroup.eg/sitemap.xml
+Sitemap: https://aurora-eg.ziadbahgat.me/sitemap.xml
 `);
   });
 
@@ -1662,51 +1658,51 @@ Sitemap: https://auroragroup.eg/sitemap.xml
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://auroragroup.eg/</loc>
+    <loc>https://aurora-eg.ziadbahgat.me/</loc>
     <lastmod>${now}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://auroragroup.eg/" />
-    <xhtml:link rel="alternate" hreflang="ar" href="https://auroragroup.eg/ar" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://aurora-eg.ziadbahgat.me/" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://aurora-eg.ziadbahgat.me/ar" />
   </url>
   <url>
-    <loc>https://auroragroup.eg/about</loc>
+    <loc>https://aurora-eg.ziadbahgat.me/about</loc>
     <lastmod>${now}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://auroragroup.eg/services</loc>
+    <loc>https://aurora-eg.ziadbahgat.me/services</loc>
     <lastmod>${now}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://auroragroup.eg/projects</loc>
+    <loc>https://aurora-eg.ziadbahgat.me/projects</loc>
     <lastmod>${now}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://auroragroup.eg/team</loc>
+    <loc>https://aurora-eg.ziadbahgat.me/team</loc>
     <lastmod>${now}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://auroragroup.eg/contact</loc>
+    <loc>https://aurora-eg.ziadbahgat.me/contact</loc>
     <lastmod>${now}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://auroragroup.eg/privacy</loc>
+    <loc>https://aurora-eg.ziadbahgat.me/privacy</loc>
     <lastmod>${now}</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://auroragroup.eg/terms</loc>
+    <loc>https://aurora-eg.ziadbahgat.me/terms</loc>
     <lastmod>${now}</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
@@ -1716,7 +1712,7 @@ Sitemap: https://auroragroup.eg/sitemap.xml
       if (p.slug) {
         xml += `
   <url>
-    <loc>https://auroragroup.eg/projects/${encodeURIComponent(p.slug)}</loc>
+    <loc>https://aurora-eg.ziadbahgat.me/projects/${encodeURIComponent(p.slug)}</loc>
     <lastmod>${now}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>

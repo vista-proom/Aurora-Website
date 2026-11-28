@@ -3122,7 +3122,7 @@ async function loadAdminData() {
 
   const firstAllowed = applyAdminPermissionsVisibility();
   if (firstAllowed) {
-    const firstBtn = document.querySelector(`#adminSidebarNav li[data-admin-sec="${firstAllowed}"] a`);
+    const firstBtn = document.querySelector(`#adminSidebarNav li[data-admin-sec="${firstAllowed}"] .portal-nav-link`);
     switchAdminSection(firstAllowed, firstBtn);
   }
 

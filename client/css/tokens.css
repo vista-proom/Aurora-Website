@@ -155,7 +155,7 @@
   --accent-link:        #6A00F4;
   --accent-hover:       #8B5CF6;
   --accent-highlight:   #00E6D3; /* Bands only on light */
-  --timeline-accent:    #0D9488; /* High-contrast teal for process nodes in light mode */
+  --timeline-accent:    #0B7E74; /* WCAG AA (4.92:1 on #FFFFFF) teal for process nodes in light mode */
   --focus-ring:         2px solid #6A00F4;
 
   /* Feedback / Status Tokens */

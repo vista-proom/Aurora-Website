@@ -1013,7 +1013,10 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
       const body = await uploadProjectMediaToCloudinary(req.body);
 
       const newProject = store.addProject(body, authorEmail);
-      await firebaseDbService.syncProjects(store.getProjects('all'));
+      await Promise.allSettled([
+        firebaseDbService.syncProjects(store.getProjects('all')),
+        firebaseDbService.syncActivityLogs(store.getActivityLogs())
+      ]);
       emailService.sendProjectUploadedAlert(newProject, authorEmail).catch(() => { });
       res.status(201).json({ success: true, message: 'Project submitted for manager review', data: newProject });
     } catch (err) {
@@ -1025,7 +1028,10 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     await ensureProjectsHydrated();
     const updated = store.approveProject(req.params.id, req.authUser.email);
     if (!updated) return res.status(404).json({ success: false, error: 'Project not found' });
-    await firebaseDbService.syncProjects(store.getProjects('all'));
+    await Promise.allSettled([
+      firebaseDbService.syncProjects(store.getProjects('all')),
+      firebaseDbService.syncActivityLogs(store.getActivityLogs())
+    ]);
     res.json({ success: true, data: updated });
   });
 
@@ -1033,7 +1039,10 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     await ensureProjectsHydrated();
     const updated = store.publishProject(req.params.id, req.authUser.email);
     if (!updated) return res.status(404).json({ success: false, error: 'Project not found' });
-    await firebaseDbService.syncProjects(store.getProjects('all'));
+    await Promise.allSettled([
+      firebaseDbService.syncProjects(store.getProjects('all')),
+      firebaseDbService.syncActivityLogs(store.getActivityLogs())
+    ]);
     res.json({ success: true, data: updated });
   });
 
@@ -1098,10 +1107,14 @@ const requireAuth = (allowedRoles = null, requiredPermissions = null) => (req, r
     res.json({ success: true, data: store.getIndustries() });
   });
 
-  app.post('/api/industries', requireAuth(['super_admin', 'manager']), (req, res) => {
+  app.post('/api/industries', requireAuth(['super_admin', 'manager']), async (req, res) => {
     const name = sanitizeString(req.body.name);
     if (!name) return res.status(400).json({ success: false, error: 'Industry name is required' });
     const updated = store.addIndustry(name, req.authUser.email);
+    await Promise.allSettled([
+      firebaseDbService.syncIndustries(updated),
+      firebaseDbService.syncActivityLogs(store.getActivityLogs())
+    ]);
     res.status(201).json({ success: true, data: updated });
   });
 

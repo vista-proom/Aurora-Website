@@ -10,6 +10,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getDatabase } from 'firebase-admin/database';
+import { getFirestore } from 'firebase-admin/firestore';
 import { cloudinaryService } from './cloudinaryService.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -20,6 +21,7 @@ const DATABASE_URL = 'https://aurora-group-ae765-default-rtdb.europe-west1.fireb
 class FirebaseDbService {
   constructor() {
     this.db = null;
+    this.firestore = null;
     this.isConnected = false;
     this.app = null;
     this.lastError = null;
@@ -75,6 +77,11 @@ class FirebaseDbService {
       }
 
       this.db = getDatabase(this.app);
+      try {
+        this.firestore = getFirestore(this.app);
+      } catch (fsErr) {
+        console.warn('[Firestore Init Warning]:', fsErr.message);
+      }
       this.isConnected = true;
       this.lastError = null;
       console.log(`[Firebase DB] Connected to Firebase Realtime Database (${DATABASE_URL})`);
@@ -118,6 +125,35 @@ class FirebaseDbService {
     }
   }
 
+  async syncCollectionToFirestore(collectionName, items, idFn) {
+    if (!this.firestore || !Array.isArray(items)) return;
+    try {
+      const colRef = this.firestore.collection(collectionName);
+      const valid = items.filter(Boolean);
+      const keepIds = new Set();
+      for (let i = 0; i < valid.length; i += 400) {
+        const batch = this.firestore.batch();
+        const chunk = valid.slice(i, i + 400);
+        chunk.forEach((item, idx) => {
+          const docId = String(idFn(item, i + idx) || `${collectionName}-${i + idx}`).replace(/[\/.#$\[\]]/g, '_');
+          keepIds.add(docId);
+          batch.set(colRef.doc(docId), JSON.parse(JSON.stringify(item)));
+        });
+        await batch.commit();
+      }
+      // Remove stale docs that no longer exist in the collection
+      const existingSnap = await colRef.select().get();
+      const stale = existingSnap.docs.filter(d => !keepIds.has(d.id));
+      for (let i = 0; i < stale.length; i += 400) {
+        const batch = this.firestore.batch();
+        stale.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+    } catch (e) {
+      console.warn(`[Firestore Sync ${collectionName} Warning]:`, e.message);
+    }
+  }
+
   async syncBriefs(briefs) {
     if (!this.isConnected || !this.db) {
       await this.init();
@@ -129,6 +165,7 @@ class FirebaseDbService {
         if (b && b.token) map[b.token] = b;
       });
       await this.db.ref('briefs').set(map);
+      await this.syncCollectionToFirestore('briefs', briefs || [], b => b.token);
     } catch (e) {
       console.warn('[Firebase DB Sync Briefs Error]:', e.message);
     }
@@ -162,6 +199,7 @@ class FirebaseDbService {
         }
       }
       await this.db.ref('projects').set(sanitized);
+      await this.syncCollectionToFirestore('projects', sanitized, p => p.id || p.slug);
     } catch (e) {
       console.warn('[Firebase DB Sync Projects Error]:', e.message);
     }
@@ -201,7 +239,8 @@ class FirebaseDbService {
         return s;
       });
       await this.db.ref('users').set(safe);
-      console.log(`[Firebase DB] Synced ${safe.length} staff user(s) to Realtime Database.`);
+      await this.syncCollectionToFirestore('users', safe, u => u.id || u.email);
+      console.log(`[Firebase DB] Synced ${safe.length} staff user(s) to Realtime Database & Firestore.`);
     } catch (e) {
       console.warn('[Firebase DB Sync Users Error]:', e.message);
     }
@@ -261,6 +300,9 @@ class FirebaseDbService {
     if (!this.isConnected || !this.db) return;
     try {
       await this.db.ref('site_content').set(content);
+      if (this.firestore && content) {
+        await this.firestore.collection('site_content').doc('main').set(JSON.parse(JSON.stringify(content)));
+      }
     } catch (e) {
       console.warn('[Firebase DB Sync Content Error]:', e.message);
     }
@@ -303,6 +345,7 @@ class FirebaseDbService {
         if (inq && inq.id) map[inq.id] = inq;
       });
       await this.db.ref('inquiries').set(map);
+      await this.syncCollectionToFirestore('inquiries', inquiries || [], inq => inq.id);
     } catch (e) {
       console.warn('[Firebase DB Sync Inquiries Error]:', e.message);
     }
@@ -337,6 +380,7 @@ class FirebaseDbService {
         if (inv && inv.id) map[inv.id] = inv;
       });
       await this.db.ref('invoices').set(map);
+      await this.syncCollectionToFirestore('invoices', invoices || [], inv => inv.id);
     } catch (e) {
       console.warn('[Firebase DB Sync Invoices Error]:', e.message);
     }
@@ -369,10 +413,43 @@ class FirebaseDbService {
     }
   }
 
+  async syncIndustries(industries) {
+    if (!this.isConnected || !this.db) {
+      await this.init();
+    }
+    if (!this.isConnected || !this.db) return;
+    try {
+      const list = Array.isArray(industries) ? industries : [];
+      await this.db.ref('industries').set(list);
+      if (this.firestore) {
+        await this.firestore.collection('industries').doc('tags').set({ tags: list, updatedAt: new Date().toISOString() });
+      }
+    } catch (e) {
+      console.warn('[Firebase DB Sync Industries Error]:', e.message);
+    }
+  }
+
+  async syncActivityLogs(logs) {
+    if (!this.isConnected || !this.db) {
+      await this.init();
+    }
+    if (!this.isConnected || !this.db) return;
+    try {
+      const list = Array.isArray(logs) ? logs.slice(0, 500) : [];
+      await this.syncCollectionToFirestore('activity_logs', list, (l, idx) => l.id || `log-${idx}`);
+    } catch (e) {
+      console.warn('[Firebase DB Sync Activity Logs Error]:', e.message);
+    }
+  }
+
   async syncActivityLog(log) {
     if (!this.isConnected || !this.db || !log) return;
     try {
       await this.db.ref('activity_logs').push(log);
+      if (this.firestore) {
+        const docId = String(log.id || `log-${Date.now()}`).replace(/[\/.#$\[\]]/g, '_');
+        await this.firestore.collection('activity_logs').doc(docId).set(JSON.parse(JSON.stringify(log)));
+      }
     } catch (e) {
       console.warn('[Firebase DB Sync Log Error]:', e.message);
     }

@@ -165,12 +165,9 @@ class FirebaseAuthService {
         }
       }
 
-      // Set Custom Claims for instant RBAC
+      // Set compact Custom Claims (role only — keeps payload ~24 bytes, safely under Firebase's 1,000-char limit; granular permissions live in Firestore `users`)
       if (userRecord && role) {
-        await auth.setCustomUserClaims(userRecord.uid, {
-          role,
-          permissions: permissions || {}
-        });
+        await auth.setCustomUserClaims(userRecord.uid, { role });
       }
 
       userRecord._alreadyExisted = alreadyExisted;
@@ -229,8 +226,7 @@ class FirebaseAuthService {
       if (role || permissions) {
         const existingClaims = userRecord.customClaims || {};
         await auth.setCustomUserClaims(userRecord.uid, {
-          role: role || existingClaims.role || 'employee',
-          permissions: permissions || existingClaims.permissions || {}
+          role: role || existingClaims.role || 'employee'
         });
         console.log(`[Firebase Auth Admin] Synced custom claims for: ${targetEmail}`);
       }
@@ -513,15 +509,14 @@ class FirebaseAuthService {
   /**
    * Updates custom claims on Firebase Authentication for immediate RBAC synchronization
    */
-  async updateUserClaims(email, role, permissions) {
+  async updateUserClaims(email, role) {
     if (!this.adminApp || !this.hasFullAdminAccess || !email) return;
     try {
       const auth = getAuth(this.adminApp);
       const userRecord = await auth.getUserByEmail(email);
       if (userRecord) {
         await auth.setCustomUserClaims(userRecord.uid, {
-          role,
-          permissions: permissions || {}
+          role: role || userRecord.customClaims?.role || 'employee'
         });
         console.log(`[Firebase Auth Admin] Updated custom claims for: ${email}`);
       }

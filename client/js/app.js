@@ -176,49 +176,54 @@ async function initApp() {
       }
     }
 
-    // 5. Load Site Content, Services, Projects, and Industries
-    await hydrateSiteContent(true);
-    await loadPublicServices();
-    await loadProjects();
-    await populateNewWorkIndustries();
-    api.fetchMarquee().then(res => {
-      if (res && res.success && res.data) {
-        allAdminMarqueeData = res.data;
-        renderPublicMarquee(res.data);
-      }
-    }).catch(() => {});
-    api.fetchTeamDirectory().then(res => {
-      if (res && res.enabled !== undefined) updateTeamNavVisibility(res.enabled);
-    }).catch(() => {});
+    // 5. Load Public Site Content, Projects, Marquee, and Team Nav in Parallel
+    Promise.allSettled([
+      hydrateSiteContent(true),
+      loadProjects(),
+      api.fetchMarquee().then(res => {
+        if (res && res.success && res.data) {
+          allAdminMarqueeData = res.data;
+          renderPublicMarquee(res.data);
+        }
+      }),
+      api.fetchTeamDirectory().then(res => {
+        if (res && res.enabled !== undefined) updateTeamNavVisibility(res.enabled);
+      })
+    ]);
 
     // 6. Synchronous Zero-Lag Language Switch Listener (Requirement 4.4)
     window.addEventListener('aurora:languageChange', () => {
       renderCurrentScreenDynamicContent();
     });
 
-    // 7. Initialize Firebase Client, Listen for Auth State & Redirect Result
-    firebaseAuth.initFirebaseClient().then(async () => {
-      // Check for Google redirect result
-      const redirectAuth = await firebaseAuth.checkRedirectAuth();
-      if (redirectAuth && redirectAuth.idToken) {
-        await processFirebaseLogin(redirectAuth.idToken, redirectAuth.user.email);
-        return;
-      }
-
-      // Automatically handle Google sign-in completion via onAuthStateChanged
-      firebaseAuth.setupAuthStateListener(async (user, idToken) => {
-        const stored = localStorage.getItem('aurora_current_user');
-        const path = window.location.pathname.replace(/^\/ar/, '') || '/';
-        // If on /login or session not yet established, auto-complete exchange
-        if (!stored && (path === '/login' || path === '/admin' || path === '/portal') && user && user.email) {
-          console.log('[Firebase Auth] Completing login for:', user.email);
-          await processFirebaseLogin(idToken, user.email);
-        }
-      });
-    }).catch(e => console.warn('[Firebase Pre-init Non-fatal]:', e.message));
+    // 7. Lazily initialize Firebase Auth ONLY when opening /login, /portal, or /admin (not for anonymous visitors)
+    const initialPath = window.location.pathname.replace(/^\/ar/, '') || '/';
+    if (initialPath === '/login' || initialPath === '/portal' || initialPath === '/admin') {
+      ensurePortalFirebaseReady();
+    }
   } catch (err) {
     console.error('Fatal initialization error:', err);
   }
+}
+
+let portalFirebaseInitStarted = false;
+function ensurePortalFirebaseReady() {
+  if (portalFirebaseInitStarted) return;
+  portalFirebaseInitStarted = true;
+  firebaseAuth.initFirebaseClient().then(async () => {
+    const redirectAuth = await firebaseAuth.checkRedirectAuth();
+    if (redirectAuth && redirectAuth.idToken) {
+      await processFirebaseLogin(redirectAuth.idToken, redirectAuth.user.email);
+      return;
+    }
+    firebaseAuth.setupAuthStateListener(async (user, idToken) => {
+      const stored = localStorage.getItem('aurora_current_user');
+      const path = window.location.pathname.replace(/^\/ar/, '') || '/';
+      if (!stored && (path === '/login' || path === '/admin' || path === '/portal') && user && user.email) {
+        await processFirebaseLogin(idToken, user.email);
+      }
+    });
+  }).catch(e => console.warn('[Firebase Lazy Init Non-fatal]:', e.message));
 }
 
 function bindGlobalControls() {
@@ -344,12 +349,15 @@ async function onScreenChange(screenId, param) {
     currentBriefToken = param;
     await setupBriefScreen(param);
   } else if (screenId === 'login') {
+    ensurePortalFirebaseReady();
     const notice = sessionStorage.getItem('aurora_login_notice');
     if (notice) {
       sessionStorage.removeItem('aurora_login_notice');
       showLoginNotice(notice);
     }
   } else if (screenId === 'portal') {
+    ensurePortalFirebaseReady();
+    populateNewWorkIndustries().catch(() => {});
     if (!verifyAuth('portal')) return;
     const verifiedUser = await api.verifyCurrentSession();
     if (!verifiedUser) return;
@@ -359,6 +367,8 @@ async function onScreenChange(screenId, param) {
     }
     loadPortalData();
   } else if (screenId === 'admin') {
+    ensurePortalFirebaseReady();
+    populateNewWorkIndustries().catch(() => {});
     if (!verifyAuth('admin')) return;
     const verifiedUser = await api.verifyCurrentSession();
     if (!verifiedUser || (verifiedUser.role !== 'super_admin' && verifiedUser.role !== 'manager')) {
@@ -4867,25 +4877,6 @@ export async function expireAndResetStaffPassword(userId, email, name) {
   }
 }
 
-export async function updateUserRole(userId, newRole) {
-  const res = await api.updateUserPermissions(userId, newRole, null);
-  if (res.success) {
-    alert(`Role updated to ${newRole} and synced automatically with Firebase.`);
-    await loadAdminUsers();
-  } else {
-    alert(res.error || 'Failed to update role.');
-  }
-}
-
-export async function togglePerm(userId, permKey, isChecked) {
-  const res = await api.updateUserPermissions(userId, null, { [permKey]: isChecked });
-  if (res.success) {
-    showToastNotification('Permission updated and synced to Firebase.', 'success');
-  } else {
-    alert(res.error || 'Failed to update permission.');
-  }
-}
-
 export function openAddStaffModal() {
   const modal = document.getElementById('addStaffModal');
   if (modal) {
@@ -6884,8 +6875,6 @@ window.auroraRefreshBriefs = refreshBriefs;
 window.auroraFilterCRM = filterCRM;
 window.auroraFilterPortalCRM = filterPortalCRM;
 window.auroraUpdateInquiryStatus = submitCRMStatusUpdate;
-window.auroraUpdateUserRole = updateUserRole;
-window.auroraTogglePerm = togglePerm;
 window.auroraSaveSettings = saveSettings;
 window.auroraToggleService = toggleService;
 window.auroraSwitchCMSTab = switchCMSTab;
@@ -6957,8 +6946,6 @@ window.auroraOpenEditStaffModal = openEditStaffModal;
 window.auroraSubmitEditStaff = submitEditStaff;
 window.auroraSubmitFirstLoginPassword = submitFirstLoginPassword;
 window.auroraDeleteStaff = deleteStaffUser;
-window.auroraUpdateUserRole = updateUserRole;
-window.auroraTogglePerm = togglePerm;
 window.auroraExpireAndResetStaffPassword = expireAndResetStaffPassword;
 window.auroraRequestMyPasswordReset = requestMyPasswordReset;
 window.auroraToggleTeamDirectory = toggleTeamDirectory;
